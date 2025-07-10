@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Array LINQ-style Extension Documentation</title>
+  <style>
+    /* Reset and basic styles */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e7e5e4;
+      color: #333;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #6e23d1;
+      color: #e7e5e4;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      gap: 1rem;
+      z-index: 1000;
+    }
+    header img {
+      height: 60px;
+      width: auto;
+    }
+    header h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      flex-grow: 1;
+      user-select: none;
+    }
+    header nav.links {
+      display: flex;
+      gap: 1rem;
+    }
+    header nav.links a {
+      color: #e7e5e4;
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid #e7e5e4;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    header nav.links a:hover,
+    header nav.links a:focus {
+      background-color: rgba(255 255 255 / 0.3);
+      outline: none;
+    }
+
+    /* Layout below header */
+    #main-wrapper {
+      display: flex;
+      flex-grow: 1;
+      margin-top: 60px; /* space for fixed header */
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    nav#sidebar {
+      background: #e7e5e4;
+      border-right: 1px solid #ccc;
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s ease;
+      overflow: hidden;
+    }
+    nav#sidebar.collapsed {
+      width: 50px;
+      min-width: 50px;
+      max-width: 50px;
+    }
+    /* Toggle button */
+    #toggleBtn {
+      background: #6e23d1;
+      color: #e7e5e4;
+      border: none;
+      padding: 0.75rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      text-align: center;
+      user-select: none;
+      outline: none;
+      border-radius: 0 5px 5px 0;
+      transition: background 0.3s;
+      display: none;
+    }
+    #toggleBtn:hover {
+      background: #501997;
+    }
+    /* Search input */
+    #search {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin: 0.75rem 1rem;
+      width: calc(100% - 2rem);
+      font-size: 1rem;
+      transition: opacity 0.3s;
+    }
+    nav#sidebar.collapsed #search {
+      opacity: 0;
+      pointer-events: none;
+      height: 0;
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+    /* Method list */
+    #methodList {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 1rem 0;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+    nav#sidebar.collapsed #methodList {
+      display: none;
+    }
+    #methodList li {
+      margin: 0 0 0.25rem 0;
+    }
+    #methodList a {
+      display: block;
+      text-decoration: none;
+      color: #6e23d1;
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.2s;
+      font-weight: bold;
+    }
+    #methodList a:hover,
+    #methodList a:focus {
+      background: #e7e5e4;
+      outline: none;
+    }
+
+    /* Content area */
+    #content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      max-width: 100%;
+    }
+
+    /* Heading styles */
+    h1 {
+      color: #2c3e50;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.25rem;
+      margin-top: 0;
+    }
+    h2 {
+      margin-top: 2rem;
+      color: #6e23d1;
+    }
+
+    /* Code blocks */
+    pre {
+      background: #f4f4f4;
+      padding: 1rem;
+      overflow-x: auto;
+      border-left: 4px solid #3498db;
+      margin-top: 0.5rem;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    code {
+      font-family: Consolas, monospace;
+    }
+    section {
+      margin-bottom: 2.5rem;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="RomaTech Logo" />
+    <h1>&nbsp;</h1>
+    <nav class="links" aria-label="External links">
+      <a href="https://github.com/RomaTech-LTDA/linq" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">GitHub</a>
+      <a href="https://www.npmjs.com/package/@romatech/linq" target="_blank" rel="noopener noreferrer" aria-label="NPM package page">NPM</a>
+    </nav>
+  </header>
+
+  <div id="main-wrapper">
+    <nav id="sidebar" aria-label="Method navigation">
+      <button id="toggleBtn" aria-label="Toggle menu">&#9776;</button>
+      <input type="text" id="search" placeholder="Search methods..." aria-label="Search methods" />
+      <ul id="methodList" role="navigation"></ul>
+    </nav>
+
+    <main id="content" tabindex="-1" role="main" aria-label="Documentation content">
+      <h1>RomaTech - LINQ-style Array Extension Methods</h1>
+    </main>
+  </div>
+
+  <script>
+    const methods = [
+      { name: 'select', desc: 'Transforms each item in the array using a function.', example: '[1, 2, 3].select(x => x * 2);\n// [2, 4, 6]' },
+      { name: 'selectMany', desc: 'Flattens arrays returned from each item.', example: '[[1], [2, 3]].selectMany(x => x);\n// [1, 2, 3]' },
+      { name: 'cast', desc: 'Returns a shallow copy of the array (no change to the data).', example: "['a', 1, true].cast();\n// ['a', 1, true]" },
+      { name: 'ofType', desc: 'Filters elements by JavaScript type.', example: "['a', 1, true].ofType('string');\n// ['a']" },
+      { name: 'where', desc: 'Keeps only the elements that match a condition.', example: '[1, 2, 3].where(x => x > 1);\n// [2, 3]' },
+      { name: 'first', desc: 'Gets the first item, or the first matching one.', example: '[1, 2, 3].first();\n// 1\n[1, 2, 3].first(x => x > 1);\n// 2' },
+      { name: 'firstOrDefault', desc: 'Same as first, but returns null if not found.', example: '[].firstOrDefault();\n// null' },
+      { name: 'last', desc: 'Gets the last item, or last matching one.', example: '[1, 2, 3].last();\n// 3' },
+      { name: 'lastOrDefault', desc: 'Like last, but returns null if not found.', example: '[].lastOrDefault();\n// null' },
+      { name: 'single', desc: 'Returns the only matching item. Throws if more than one.', example: '[42].single();\n// 42' },
+      { name: 'singleOrDefault', desc: 'Same as single, but returns null if not found. Still throws if multiple.', example: '[1, 2, 3].singleOrDefault(x => x === 5);\n// null' },
+      { name: 'any', desc: "Checks if there's at least one item or one match.", example: '[1, 2, 3].any();\n// true' },
+      { name: 'all', desc: 'Returns true only if every item matches the condition.', example: '[1, 2, 3].all(x => x > 0);\n// true' },
+      { name: 'contains', desc: 'Checks if the array includes a specific value.', example: '[1, 2, 3].contains(2);\n// true' },
+      { name: 'elementAt', desc: 'Returns the element at a given index. Throws if out of range.', example: '[1, 2, 3].elementAt(1);\n// 2' },
+      { name: 'elementAtOrDefault', desc: 'Returns the item at index or null if out of bounds.', example: '[1, 2, 3].elementAtOrDefault(10);\n// null' },
+      { name: 'count', desc: 'Returns the number of elements, optionally filtered by a condition.', example: '[1, 2, 3, 4].count(x => x % 2 === 0);\n// 2' },
+      { name: 'sum', desc: 'Sums all elements or selected values.', example: '[1, 2, 3].sum();\n// 6\n[{val:10},{val:20}].sum(x => x.val);\n// 30' },
+      { name: 'average', desc: 'Calculates the average of elements or selected values.', example: '[1, 2, 3].average();\n// 2\n[{val:10},{val:20}].average(x => x.val);\n// 15' },
+      { name: 'min', desc: 'Returns the minimum value.', example: '[1, 2, 3].min();\n// 1\n[{val:10},{val:20}].min(x => x.val);\n// 10' },
+      { name: 'max', desc: 'Returns the maximum value.', example: '[1, 2, 3].max();\n// 3\n[{val:10},{val:20}].max(x => x.val);\n// 20' },
+      { name: 'aggregate', desc: 'Aggregates elements using an accumulator function.', example: '[1, 2, 3].aggregate((acc, x) => acc + x, 0);\n// 6' },
+      { name: 'orderBy', desc: 'Sorts elements in ascending order based on a selector.', example: '[3, 1, 2].orderBy();\n// [1, 2, 3]\n[{val:2},{val:1}].orderBy(x => x.val);\n// [{val:1},{val:2}]' },
+      { name: 'orderByDesc', desc: 'Sorts elements in descending order based on a selector.', example: '[1, 3, 2].orderByDesc();\n// [3, 2, 1]' },
+      { name: 'thenBy', desc: 'Adds a secondary ascending sort to an already sorted array.', example: 'arr.orderBy(x => x.a).thenBy(x => x.b);' },
+      { name: 'thenByDesc', desc: 'Adds a secondary descending sort to an already sorted array.', example: 'arr.orderBy(x => x.a).thenByDesc(x => x.b);' },
+      { name: 'take', desc: 'Returns the first n elements.', example: '[1, 2, 3, 4].take(2);\n// [1, 2]' },
+      { name: 'skip', desc: 'Skips the first n elements.', example: '[1, 2, 3, 4].skip(2);\n// [3, 4]' },
+      { name: 'takeWhile', desc: 'Takes elements while the predicate is true.', example: '[1, 2, 3, 4].takeWhile(x => x < 3);\n// [1, 2]' },
+      { name: 'skipWhile', desc: 'Skips elements while the predicate is true.', example: '[1, 2, 3, 4].skipWhile(x => x < 3);\n// [3, 4]' },
+      { name: 'distinct', desc: 'Removes duplicate elements.', example: '[1, 2, 2, 3].distinct();\n// [1, 2, 3]' },
+      { name: 'distinctBy', desc: 'Removes duplicates using a selector function.', example: '[{id:1},{id:2},{id:1}].distinctBy(x => x.id);\n// [{id:1},{id:2}]' },
+      { name: 'union', desc: 'Combines elements from two arrays, removing duplicates.', example: '[1, 2].union([2, 3]);\n// [1, 2, 3]' },
+      { name: 'intersect', desc: 'Returns elements present in both arrays.', example: '[1, 2, 3].intersect([2, 3, 4]);\n// [2, 3]' },
+      { name: 'except', desc: 'Returns elements in current array not in the other.', example: '[1, 2, 3].except([2, 3]);\n// [1]' },
+      { name: 'join', desc: 'Performs an inner join on two arrays.', example: `['a', 'b', 'c'].join(['a', 'c'], x => x, x => x, (o, i) => o + i);\n// ['aa', 'cc']` },
+      { name: 'groupJoin', desc: 'Performs a group join on two arrays.', example: `['a', 'b'].groupJoin(['a', 'a', 'c'], x => x, x => x, (o, i) => [o, i.length]);\n// [['a', 2], ['b', 0]]` },
+      { name: 'groupBy', desc: 'Groups elements by a key selector.', example: `[{id:1},{id:2},{id:1}].groupBy(x => x.id);\n// { '1': [{id:1}, {id:1}], '2': [{id:2}] }` },
+      { name: 'toDictionary', desc: 'Converts array to an object dictionary.', example: `[{id:'a', val:1}, {id:'b', val:2}].toDictionary(x => x.id, x => x.val);\n// { a: 1, b: 2 }` },
+      { name: 'append', desc: 'Appends an item to the end of the array.', example: '[1, 2].append(3);\n// [1, 2, 3]' },
+      { name: 'prepend', desc: 'Prepends an item to the beginning of the array.', example: '[1, 2].prepend(0);\n// [0, 1, 2]' },
+      { name: 'defaultIfEmpty', desc: 'Returns original array or a default if empty.', example: '[].defaultIfEmpty(0);\n// [0]' },
+      { name: 'sequenceEqual', desc: 'Checks whether another array has the same sequence.', example: '[1, 2, 3].sequenceEqual([1, 2, 3]);\n// true' },
+      { name: 'zip', desc: 'Combines two arrays element-by-element.', example: '[1, 2].zip([\'a\', \'b\'], (x, y) => x + y);\n// [\'1a\', \'2b\']' },
+    ];
+
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const methodList = document.getElementById('methodList');
+    const content = document.getElementById('content');
+    const searchInput = document.getElementById('search');
+
+    // Populate navigation and content sections
+    methods.forEach(method => {
+      // Nav link
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `#${method.name}`;
+      a.textContent = method.name;
+      a.setAttribute('tabindex', '0');
+      li.appendChild(a);
+      methodList.appendChild(li);
+
+      // Doc section
+      const section = document.createElement('section');
+      section.id = method.name;
+      const h2 = document.createElement('h2');
+      h2.textContent = method.name;
+      const p = document.createElement('p');
+      p.textContent = method.desc;
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.textContent = method.example;
+      pre.appendChild(code);
+
+      section.appendChild(h2);
+      section.appendChild(p);
+      section.appendChild(pre);
+      content.appendChild(section);
+    });
+
+    // Toggle sidebar width
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      if (sidebar.classList.contains('collapsed')) {
+        content.focus();
+      } else {
+        searchInput.focus();
+      }
+    });
+
+    // Search filter function
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
+      methods.forEach(method => {
+        const section = document.getElementById(method.name);
+        const match = method.name.toLowerCase().includes(query) || method.desc.toLowerCase().includes(query) || method.example.toLowerCase().includes(query);
+        section.classList.toggle('hidden', !match);
+
+        // Also hide/show nav items
+        const navLinks = methodList.querySelectorAll('a');
+        navLinks.forEach(link => {
+          if(link.textContent === method.name) {
+            link.parentElement.style.display = match ? '' : 'none';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
