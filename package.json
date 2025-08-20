@@ -1,6 +1,6 @@
 {
   "name": "@romatech/linq",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, powerful library that extends JavaScript arrays with LINQ-style methods for querying, transforming, and aggregating data. Supports filtering, projection, joining, grouping, sorting, set operations, and more — all with a fluent and expressive syntax inspired by .NET's LINQ. Fully typed and tree-shakable. This utility helps write cleaner, declarative code for data-heavy logic in both frontend and backend JavaScript/TypeScript applications.",
   "author": "RomaTech/Leandro Romanelli",
   "repository": "https://github.com/romatech-ltda/linq",
