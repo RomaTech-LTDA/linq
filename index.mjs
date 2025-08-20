@@ -1,5 +1,5 @@
 function compare(a, b) {
-    return a < b ? -1 : a > b ? 1 : 0;
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 // Projection & Transformation
@@ -175,49 +175,49 @@ Object.defineProperty(Array.prototype, 'aggregate', {
 // Sorting & Flow
 
 function chainSort(array, selectors, directions) {
-    const sorted = [...array].sort((a, b) => {
-        for (let i = 0; i < selectors.length; i++) {
-            const result = directions[i]
-                ? compare(selectors[i](b), selectors[i](a))
-                : compare(selectors[i](a), selectors[i](b));
-            if (result !== 0) return result;
-        }
-        return 0;
-    });
+  const sorted = [...array].sort((a, b) => {
+    for (let i = 0; i < selectors.length; i++) {
+      const result = directions[i]
+        ? compare(selectors[i](b), selectors[i](a))
+        : compare(selectors[i](a), selectors[i](b));
+      if (result !== 0) return result;
+    }
+    return 0;
+  });
 
-    return addChainMethods(sorted, selectors, directions);
+  return addChainMethods(sorted, selectors, directions);
 }
 
 function addChainMethods(array, selectors, directions) {
-    Object.defineProperty(array, 'thenBy', {
-        enumerable: false,
-        value: function (selector) {
-            return chainSort(this, [...selectors, selector], [...directions, false]);
-        },
-    });
+  Object.defineProperty(array, 'thenBy', {
+    enumerable: false,
+    value: function (fn) {
+      return chainSort(this, [...selectors, fn], [...directions, false]);
+    },
+  });
 
-    Object.defineProperty(array, 'thenByDesc', {
-        enumerable: false,
-        value: function (selector) {
-            return chainSort(this, [...selectors, selector], [...directions, true]);
-        },
-    });
+  Object.defineProperty(array, 'thenByDesc', {
+    enumerable: false,
+    value: function (fn) {
+      return chainSort(this, [...selectors, fn], [...directions, true]);
+    },
+  });
 
-    return array;
+  return array;
 }
 
 Object.defineProperty(Array.prototype, 'orderBy', {
-    enumerable: false,
-    value: function (selector = x => x) {
-        return chainSort(this, [selector], [false]);
-    },
+  enumerable: false,
+  value: function (fn) {
+    return chainSort(this, [fn], [false]);
+  },
 });
 
 Object.defineProperty(Array.prototype, 'orderByDesc', {
-    enumerable: false,
-    value: function (selector) {
-        return chainSort(this, [selector], [true]);
-    },
+  enumerable: false,
+  value: function (fn) {
+    return chainSort(this, [fn], [true]);
+  },
 });
 
 Object.defineProperty(Array.prototype, 'take', {
