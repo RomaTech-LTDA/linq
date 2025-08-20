@@ -329,10 +329,10 @@ function addChainMethods(array, selectors, directions) {
      */
     Object.defineProperty(array, 'thenBy', {
         enumerable: false,
-        value: function (selector) {
-            return chainSort(this, [...selectors, selector], [...directions, false]);
+        value: function (fn) {
+          return chainSort(this, [...selectors, fn], [...directions, false]);
         },
-    });
+      });
 
     /**
      * Sorts by additional descending key.
@@ -341,10 +341,10 @@ function addChainMethods(array, selectors, directions) {
      */
     Object.defineProperty(array, 'thenByDesc', {
         enumerable: false,
-        value: function (selector) {
-            return chainSort(this, [...selectors, selector], [...directions, true]);
+        value: function (fn) {
+          return chainSort(this, [...selectors, fn], [...directions, true]);
         },
-    });
+      });
 
     return array;
 }
@@ -355,10 +355,10 @@ function addChainMethods(array, selectors, directions) {
  * @returns {Array}
  */
 Object.defineProperty(Array.prototype, 'orderBy', {
-    enumerable: false,
-    value: function (selector = x => x) {
-        return chainSort(this, [selector], [false]);
-    },
+  enumerable: false,
+  value: function (fn) {
+    return chainSort(this, [fn], [false]);
+  },
 });
 
 /**
@@ -367,10 +367,10 @@ Object.defineProperty(Array.prototype, 'orderBy', {
  * @returns {Array}
  */
 Object.defineProperty(Array.prototype, 'orderByDesc', {
-    enumerable: false,
-    value: function (selector) {
-        return chainSort(this, [selector], [true]);
-    },
+  enumerable: false,
+  value: function (fn) {
+    return chainSort(this, [fn], [true]);
+  },
 });
 
 /**
