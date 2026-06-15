@@ -1,0 +1,22 @@
+# Source control
+.git/
+.gitignore
+
+# Tests
+__tests__/
+*.test.js
+jest.config.*
+
+# Development files
+.vscode/
+.idea/
+*.tgz
+node_modules/
+coverage/
+.nyc_output/
+
+# Miscellaneous
+logo.png
+index.html
+.env
+.env.*

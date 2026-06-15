@@ -1,401 +1,541 @@
 // index.d.ts
 
-declare global {
-  interface Array<T> {
-    // Projection & Transformation
+/**
+ * LazyQuery wraps an iterable source and accumulates a pipeline of
+ * transformation steps applied on-demand.
+ *
+ * Intermediate operators (where, select, take, etc.) return a new LazyQuery
+ * without executing anything.  Terminal operators (toArray, first, count,
+ * etc.) trigger a single pass through the entire pipeline.
+ *
+ * This mirrors the behaviour of IEnumerable<T> in C# LINQ.
+ */
+export declare class LazyQuery<T> implements Iterable<T> {
+    constructor(source: Iterable<T>);
+
+    [Symbol.iterator](): Iterator<T>;
+
+    // -----------------------------------------------------------------------
+    // Intermediate operators
+    // -----------------------------------------------------------------------
+
+    /** Filters elements using a predicate. Equivalent to C# Enumerable.Where. */
+    where(predicate: (item: T, index: number) => boolean): LazyQuery<T>;
+
+    /** Projects each element into a new form. Equivalent to C# Enumerable.Select. */
+    select<U>(selector: (item: T, index: number) => U): LazyQuery<U>;
+
+    /** Projects each element to an iterable and flattens the results. Equivalent to C# Enumerable.SelectMany. */
+    selectMany<U>(selector: (item: T, index: number) => Iterable<U>): LazyQuery<U>;
+
+    /** Filters elements to those whose typeof matches the given string. Equivalent to C# Enumerable.OfType. */
+    ofType(type: string): LazyQuery<T>;
+
+    /** Returns the first n elements and stops iteration. Equivalent to C# Enumerable.Take. */
+    take(n: number): LazyQuery<T>;
+
+    /** Skips the first n elements. Equivalent to C# Enumerable.Skip. */
+    skip(n: number): LazyQuery<T>;
+
+    /** Yields elements while the predicate is true, then stops. Equivalent to C# Enumerable.TakeWhile. */
+    takeWhile(predicate: (item: T) => boolean): LazyQuery<T>;
+
+    /** Skips elements while the predicate is true, then yields the rest. Equivalent to C# Enumerable.SkipWhile. */
+    skipWhile(predicate: (item: T) => boolean): LazyQuery<T>;
+
+    /** Removes duplicate elements. Primitives use value equality; objects use deep equality. Equivalent to C# Enumerable.Distinct. */
+    distinct(): LazyQuery<T>;
+
+    /** Removes duplicates by projecting each element to a key. Equivalent to C# Enumerable.DistinctBy. */
+    distinctBy<K>(selector: (item: T) => K): LazyQuery<T>;
+
+    /** Appends a single item to the end of the sequence. Equivalent to C# Enumerable.Append. */
+    append(item: T): LazyQuery<T>;
+
+    /** Prepends a single item to the start of the sequence. Equivalent to C# Enumerable.Prepend. */
+    prepend(item: T): LazyQuery<T>;
+
+    /** Yields a default value if the sequence is empty. Equivalent to C# Enumerable.DefaultIfEmpty. */
+    defaultIfEmpty(defaultValue: T): LazyQuery<T>;
+
+    /** Concatenates another iterable to this sequence. Equivalent to C# Enumerable.Concat. */
+    concat(other: Iterable<T>): LazyQuery<T>;
+
+    /** Returns the set union of this sequence and another, without duplicates. Equivalent to C# Enumerable.Union. */
+    union(other: Iterable<T>): LazyQuery<T>;
+
+    /** Returns elements present in both this sequence and another. Equivalent to C# Enumerable.Intersect. */
+    intersect(other: Iterable<T>): LazyQuery<T>;
+
+    /** Returns elements from this sequence that do not appear in another. Equivalent to C# Enumerable.Except. */
+    except(other: Iterable<T>): LazyQuery<T>;
+
+    /** Combines this sequence with another element-by-element. Equivalent to C# Enumerable.Zip. */
+    zip<U, R = [T, U]>(other: Iterable<U>, resultSelector?: (a: T, b: U) => R): LazyQuery<R>;
+
+    /** Casts the sequence to another type (identity operation in JavaScript). Equivalent to C# Enumerable.Cast. */
+    cast<U>(): LazyQuery<U>;
+
+    // -----------------------------------------------------------------------
+    // Terminal operators
+    // -----------------------------------------------------------------------
+
+    /** Materialises the sequence into a plain Array. Equivalent to C# .ToList() or .ToArray(). */
+    toArray(): T[];
+
+    /** Converts the sequence to a native Set. Equivalent to C# .ToHashSet(). */
+    toSet(): Set<T>;
 
     /**
-     * Projects each element of a sequence into a new form.
-     *
-     * @template U The type of the value returned by the selector.
-     * @param selector A transform function to apply to each element.
-     * @returns An array of the transformed elements.
+     * Converts the sequence to a native Map.
+     * Equivalent to C# .ToDictionary() with a Map backing store.
      */
-    select<U>(selector: (item: T, index: number, array: T[]) => U): U[];
+    toMap<K, V = T>(keySelector: (item: T) => K, valueSelector?: (item: T) => V): Map<K, V>;
 
     /**
-     * Projects each element to an array and flattens the resulting arrays into one array.
-     *
-     * @template U The type of the values in the resulting flattened array.
-     * @param selector A transform function to apply to each element.
-     * @returns A flattened array of the results.
+     * Converts the sequence to a plain object dictionary.
+     * Equivalent to C# .ToDictionary().
      */
-    selectMany<U>(selector: (item: T, index: number, array: T[]) => U[]): U[];
+    toDictionary<K extends string | number | symbol, V = T>(
+        keySelector: (item: T) => K,
+        valueSelector?: (item: T) => V
+    ): Record<K, V>;
 
-    /**
-     * Casts all elements to a specified type.
-     *
-     * @template U The type to cast each element to.
-     * @returns The casted array.
-     */
-    cast<U>(): U[];
+    /** Returns the first element or first matching a predicate. Throws if empty. Equivalent to C# Enumerable.First. */
+    first(predicate?: (item: T) => boolean): T;
 
-    /**
-     * Filters elements based on their type.
-     *
-     * @param type A string representing the JavaScript type (e.g., 'string', 'number').
-     * @returns A filtered array of elements matching the type.
-     */
-    ofType(type: string): T[];
+    /** Returns the first matching element or null. Equivalent to C# Enumerable.FirstOrDefault. */
+    firstOrDefault(predicate?: (item: T) => boolean): T | null;
 
-    // Access & Query
+    /** Returns the last element or last matching a predicate. Throws if empty. Equivalent to C# Enumerable.Last. */
+    last(predicate?: (item: T) => boolean): T;
 
-    /**
-     * Filters a sequence based on a predicate.
-     *
-     * @param predicate A function to test each element for a condition.
-     * @returns A filtered array.
-     */
-    where(predicate: (item: T, index: number, array: T[]) => boolean): T[];
+    /** Returns the last matching element or null. Equivalent to C# Enumerable.LastOrDefault. */
+    lastOrDefault(predicate?: (item: T) => boolean): T | null;
 
-    /**
-     * Returns the first element or the first that matches a predicate.
-     *
-     * @param predicate Optional function to test each element.
-     * @returns The first element or the first matching element.
-     */
-    first(predicate?: (item: T, index: number, array: T[]) => boolean): T;
+    /** Returns exactly one element. Throws if count is not exactly one. Equivalent to C# Enumerable.Single. */
+    single(predicate?: (item: T) => boolean): T;
 
-    /**
-     * Returns the first element that matches the predicate or null if no match is found.
-     *
-     * @param predicate Optional function to test each element.
-     * @returns The matching element or null.
-     */
-    firstOrDefault(predicate?: (item: T, index: number, array: T[]) => boolean): T | null;
+    /** Returns one element or null; throws if more than one matches. Equivalent to C# Enumerable.SingleOrDefault. */
+    singleOrDefault(predicate?: (item: T) => boolean): T | null;
 
-    /**
-     * Returns the last element or the last that matches a predicate.
-     *
-     * @param predicate Optional function to test each element.
-     * @returns The last element or the last matching element.
-     */
-    last(predicate?: (item: T, index: number, array: T[]) => boolean): T;
+    /** Returns true if any element matches the predicate. Short-circuits. Equivalent to C# Enumerable.Any. */
+    any(predicate?: (item: T) => boolean): boolean;
 
-    /**
-     * Returns the last element that matches the predicate or null if no match is found.
-     *
-     * @param predicate Optional function to test each element.
-     * @returns The matching element or null.
-     */
-    lastOrDefault(predicate?: (item: T, index: number, array: T[]) => boolean): T | null;
+    /** Returns true if all elements satisfy the predicate. Equivalent to C# Enumerable.All. */
+    all(predicate: (item: T) => boolean): boolean;
 
-    /**
-     * Returns the only element that matches a predicate or throws if not exactly one match.
-     *
-     * @param predicate A function to test each element.
-     * @returns The matching element.
-     */
-    single(predicate: (item: T, index: number, array: T[]) => boolean): T;
-
-    /**
-     * Returns the only element that matches a predicate or null if no match or throws if more than one.
-     *
-     * @param predicate A function to test each element.
-     * @returns The matching element or null.
-     */
-    singleOrDefault(predicate: (item: T, index: number, array: T[]) => boolean): T | null;
-
-    /**
-     * Returns true if any elements match the predicate or if the array is not empty.
-     *
-     * @param predicate Optional function to test each element.
-     * @returns `true` if any match, otherwise `false`.
-     */
-    any(predicate?: (item: T, index: number, array: T[]) => boolean): boolean;
-
-    /**
-     * Returns true if all elements match the predicate.
-     *
-     * @param predicate A function to test each element.
-     * @returns `true` if all match, otherwise `false`.
-     */
-    all(predicate: (item: T, index: number, array: T[]) => boolean): boolean;
-
-    /**
-     * Determines whether the array contains a specified element.
-     *
-     * @param value The value to locate.
-     * @returns `true` if found, otherwise `false`.
-     */
+    /** Returns true if the sequence contains the value (strict equality). Equivalent to C# Enumerable.Contains. */
     contains(value: T): boolean;
 
-    /**
-     * Returns the element at the specified index or throws if out of range.
-     *
-     * @param index The zero-based index.
-     * @returns The element at the specified position.
-     */
-    elementAt(index: number): T;
+    /** Counts elements without allocating an intermediate array. Equivalent to C# Enumerable.Count. */
+    count(predicate?: (item: T) => boolean): number;
 
-    /**
-     * Returns the element at the specified index or null if out of range.
-     *
-     * @param index The zero-based index.
-     * @returns The element or null.
-     */
-    elementAtOrDefault(index: number): T | null;
+    /** Sums elements or projected values. Equivalent to C# Enumerable.Sum. */
+    sum(selector?: (item: T) => number): number;
 
-    // Aggregation
+    /** Returns the average value. Equivalent to C# Enumerable.Average. */
+    average(selector?: (item: T) => number): number;
 
-    /**
-     * Returns the number of elements in the array or matching a predicate.
-     *
-     * @param predicate Optional function to test each element.
-     * @returns The number of elements.
-     */
-    count(predicate?: (item: T, index: number, array: T[]) => boolean): number;
+    /** Returns the minimum value using a loop (safe for large sequences). Equivalent to C# Enumerable.Min. */
+    min(selector?: (item: T) => number): number;
 
-    /**
-     * Computes the sum of elements, optionally using a selector.
-     *
-     * @param selector Optional function to transform each element.
-     * @returns The sum.
-     */
-    sum(selector?: (item: T, index: number, array: T[]) => number): number;
+    /** Returns the maximum value using a loop (safe for large sequences). Equivalent to C# Enumerable.Max. */
+    max(selector?: (item: T) => number): number;
 
-    /**
-     * Computes the average of elements, optionally using a selector.
-     *
-     * @param selector Optional function to transform each element.
-     * @returns The average.
-     */
-    average(selector?: (item: T, index: number, array: T[]) => number): number;
-
-    /**
-     * Returns the minimum value, optionally using a selector.
-     *
-     * @param selector Optional function to transform each element.
-     * @returns The minimum.
-     */
-    min(selector?: (item: T, index: number, array: T[]) => number): number;
-
-    /**
-     * Returns the maximum value, optionally using a selector.
-     *
-     * @param selector Optional function to transform each element.
-     * @returns The maximum.
-     */
-    max(selector?: (item: T, index: number, array: T[]) => number): number;
-
-    /**
-     * Applies an accumulator function over the array.
-     *
-     * @template U The type of the accumulated result.
-     * @param accumulator Function to apply to each element.
-     * @param seed The initial accumulator value.
-     * @returns The accumulated value.
-     */
+    /** Applies an accumulator function over the sequence. Equivalent to C# Enumerable.Aggregate. */
     aggregate<U>(accumulator: (acc: U, val: T) => U, seed: U): U;
 
-    // Sorting & Flow
+    /** Returns the element at the specified index. Throws if out of range. Equivalent to C# Enumerable.ElementAt. */
+    elementAt(index: number): T;
+
+    /** Returns the element at the specified index or null if out of range. Equivalent to C# Enumerable.ElementAtOrDefault. */
+    elementAtOrDefault(index: number): T | null;
+
+    /** Checks whether this sequence and another are equal element-by-element. Equivalent to C# Enumerable.SequenceEqual. */
+    sequenceEqual(other: Iterable<T>): boolean;
 
     /**
-     * Sorts the array by a key selector in ascending order.
-     *
-     * @template K The type of the key.
-     * @param selector Function to extract the key.
-     * @returns A sorted array with chainable `thenBy` and `thenByDesc`.
+     * Sorts the sequence in ascending order by a key selector.
+     * Uses the Schwartzian transform.
+     * Returns an Array with thenBy / thenByDesc attached.
+     * Equivalent to C# Enumerable.OrderBy.
      */
-    orderBy<K>(selector: (item: T) => K): T[] & {
-      thenBy(selector: (item: T) => any): T[];
-      thenByDesc(selector: (item: T) => any): T[];
-    };
+    orderBy<K>(selector: (item: T) => K): T[] & OrderedArray<T>;
 
     /**
-     * Sorts the array by a key selector in descending order.
-     *
-     * @template K The type of the key.
-     * @param selector Function to extract the key.
-     * @returns A sorted array with chainable `thenBy` and `thenByDesc`.
+     * Sorts the sequence in descending order by a key selector.
+     * Equivalent to C# Enumerable.OrderByDescending.
      */
-    orderByDesc<K>(selector: (item: T) => K): T[] & {
-      thenBy(selector: (item: T) => any): T[];
-      thenByDesc(selector: (item: T) => any): T[];
-    };
+    orderByDesc<K>(selector: (item: T) => K): T[] & OrderedArray<T>;
 
     /**
-     * Returns the first `n` elements of the array.
-     *
-     * @param n Number of elements to take.
-     * @returns The sliced array.
-     */
-    take(n: number): T[];
-
-    /**
-     * Skips the first `n` elements.
-     *
-     * @param n Number of elements to skip.
-     * @returns The remaining array.
-     */
-    skip(n: number): T[];
-
-    /**
-     * Takes elements from the array while the predicate returns true.
-     *
-     * @param predicate Condition function.
-     * @returns The resulting array.
-     */
-    takeWhile(predicate: (item: T) => boolean): T[];
-
-    /**
-     * Skips elements while the predicate is true, then returns the rest.
-     *
-     * @param predicate Condition function.
-     * @returns The resulting array.
-     */
-    skipWhile(predicate: (item: T) => boolean): T[];
-
-    // Set & Collection
-
-    /**
-     * Returns a new array with distinct elements.
-     *
-     * @returns The array without duplicates.
-     */
-    distinct(): T[];
-
-    /**
-     * Returns distinct elements using a selector to determine uniqueness.
-     *
-     * @template K The type of the key to compare.
-     * @param selector Function to extract the key.
-     * @returns An array with unique elements.
-     */
-    distinctBy<K>(selector: (item: T) => K): T[];
-
-    /**
-     * Returns the union of two arrays.
-     *
-     * @param other The array to union with.
-     * @returns The union of the arrays.
-     */
-    union(other: T[]): T[];
-
-    /**
-     * Returns the intersection of two arrays.
-     *
-     * @param other The array to intersect with.
-     * @returns The intersection array.
-     */
-    intersect(other: T[]): T[];
-
-    /**
-     * Returns elements that are in the first array but not in the second.
-     *
-     * @param other The array to compare.
-     * @returns The resulting array.
-     */
-    except(other: T[]): T[];
-
-    // Joins & Grouping
-
-    /**
-     * Performs an inner join with another array based on key match.
-     *
-     * @template U The inner array item type.
-     * @template K The type of the join key.
-     * @template R The result type.
-     * @param inner The array to join with.
-     * @param outerKeySelector Function to extract the key from outer items.
-     * @param innerKeySelector Function to extract the key from inner items.
-     * @param resultSelector Function to project the result.
-     * @returns The joined array.
-     */
-    join<U, K, R>(
-      inner: U[],
-      outerKeySelector: (item: T) => K,
-      innerKeySelector: (item: U) => K,
-      resultSelector: (outer: T, inner: U) => R
-    ): R[];
-
-    /**
-     * Groups and joins with another array.
-     *
-     * @template U The inner array item type.
-     * @template K The key type.
-     * @template R The result type.
-     * @param inner The array to join with.
-     * @param outerKeySelector Function to extract the key from outer items.
-     * @param innerKeySelector Function to extract the key from inner items.
-     * @param resultSelector Function to project the result.
-     * @returns The grouped joined array.
-     */
-    groupJoin<U, K, R>(
-      inner: U[],
-      outerKeySelector: (item: T) => K,
-      innerKeySelector: (item: U) => K,
-      resultSelector: (outer: T, inners: U[]) => R
-    ): R[];
-
-    /**
-     * Groups elements by a key.
-     *
-     * @template K The key type.
-     * @param keySelector Function to extract the key.
-     * @returns A record of grouped arrays by key.
+     * Groups elements into a plain object keyed by the key selector.
+     * Equivalent to C# Enumerable.GroupBy.
      */
     groupBy<K extends string | number | symbol>(keySelector: (item: T) => K): Record<K, T[]>;
 
-    // Conversion & Utilities
+    /**
+     * Performs a hash-based inner join against another array.
+     * Equivalent to C# Enumerable.Join.
+     */
+    innerJoin<U, K, R>(
+        inner: U[],
+        outerKeySelector: (item: T) => K,
+        innerKeySelector: (item: U) => K,
+        resultSelector: (outer: T, inner: U) => R
+    ): R[];
 
     /**
-     * Converts the array to a dictionary.
-     *
-     * @template K The key type.
-     * @template V The value type.
-     * @param keySelector Function to extract keys.
-     * @param valueSelector Optional function to extract values.
-     * @returns A key-value map.
+     * Performs a group join (left outer join with grouping) against another array.
+     * Equivalent to C# Enumerable.GroupJoin.
      */
-    toDictionary<K extends string | number | symbol, V = T>(
-      keySelector: (item: T) => K,
-      valueSelector?: (item: T) => V
-    ): Record<K, V>;
+    groupJoin<U, K, R>(
+        inner: U[],
+        outerKeySelector: (item: T) => K,
+        innerKeySelector: (item: U) => K,
+        resultSelector: (outer: T, inners: U[]) => R
+    ): R[];
+
+    /** Returns a debug string showing up to 10 elements. */
+    toString(): string;
+}
+
+/**
+ * A sorted array with additional thenBy / thenByDesc chaining methods.
+ * Returned by orderBy and orderByDesc.
+ */
+export interface OrderedArray<T> extends Array<T> {
+    /**
+     * Applies a secondary ascending sort criterion.
+     * Equivalent to C# .ThenBy().
+     */
+    thenBy<K>(selector: (item: T) => K): T[] & OrderedArray<T>;
 
     /**
-     * Returns a new array with the item added to the end.
-     *
-     * @param item The item to append.
-     * @returns A new array.
+     * Applies a secondary descending sort criterion.
+     * Equivalent to C# .ThenByDescending().
      */
-    append(item: T): T[];
+    thenByDesc<K>(selector: (item: T) => K): T[] & OrderedArray<T>;
+}
 
-    /**
-     * Returns a new array with the item added to the start.
-     *
-     * @param item The item to prepend.
-     * @returns A new array.
-     */
-    prepend(item: T): T[];
+declare global {
+    interface Array<T> {
+        // -- Conversion (terminal) --
 
-    /**
-     * Returns the original array or a default value if empty.
-     *
-     * @param defaultValue The default value.
-     * @returns The original array or one with the default value.
-     */
-    defaultIfEmpty(defaultValue: T): T[];
+        /**
+         * Returns a shallow copy of this array.
+         * Included for API symmetry with LazyQuery.toArray().
+         * Equivalent to C# .ToList() / .ToArray().
+         */
+        toArray(): T[];
 
-    /**
-     * Checks if two arrays are equal in sequence.
-     *
-     * @param other The array to compare.
-     * @returns `true` if equal, otherwise `false`.
-     */
-    sequenceEqual(other: T[]): boolean;
+        /**
+         * Converts this array to a native Set.
+         * Equivalent to C# .ToHashSet().
+         */
+        toSet(): Set<T>;
 
-    /**
-     * Combines two arrays by merging elements at the same index.
-     *
-     * @template U The type of elements in the second array.
-     * @template R The result type.
-     * @param other The second array.
-     * @param resultSelector Optional function to combine values.
-     * @returns The zipped array.
-     */
-    zip<U, R = [T, U]>(other: U[], resultSelector?: (item1: T, item2: U) => R): R[];
-  }
+        /**
+         * Converts this array to a native Map using key and optional value selectors.
+         * Equivalent to C# .ToDictionary() with a Map backing store.
+         */
+        toMap<K, V = T>(keySelector: (item: T) => K, valueSelector?: (item: T) => V): Map<K, V>;
+
+        // -- Projection & Transformation --
+
+        /**
+         * Projects each element into a new form.
+         * Returns a LazyQuery; call .toArray() to materialise.
+         * Equivalent to C# Enumerable.Select.
+         */
+        select<U>(selector: (item: T, index: number, array: T[]) => U): LazyQuery<U>;
+
+        /**
+         * Projects each element to an array and flattens the results.
+         * Returns a LazyQuery; call .toArray() to materialise.
+         * Equivalent to C# Enumerable.SelectMany.
+         */
+        selectMany<U>(selector: (item: T, index: number, array: T[]) => Iterable<U>): LazyQuery<U>;
+
+        /**
+         * Returns a LazyQuery that is an identity cast of this array.
+         * Equivalent to C# Enumerable.Cast.
+         */
+        cast<U>(): LazyQuery<U>;
+
+        /**
+         * Filters elements by JavaScript typeof string.
+         * Returns a LazyQuery; call .toArray() to materialise.
+         * Equivalent to C# Enumerable.OfType.
+         */
+        ofType(type: string): LazyQuery<T>;
+
+        // -- Access & Query --
+
+        /**
+         * Filters elements using a predicate.
+         * Returns a LazyQuery; call .toArray() to materialise.
+         * Equivalent to C# Enumerable.Where.
+         */
+        where(predicate: (item: T, index: number, array: T[]) => boolean): LazyQuery<T>;
+
+        /**
+         * Returns the first element or first matching a predicate.
+         * Throws if the sequence is empty or no match is found.
+         * Equivalent to C# Enumerable.First.
+         */
+        first(predicate?: (item: T, index: number, array: T[]) => boolean): T;
+
+        /**
+         * Returns the first element matching a predicate, or null.
+         * Equivalent to C# Enumerable.FirstOrDefault.
+         */
+        firstOrDefault(predicate?: (item: T, index: number, array: T[]) => boolean): T | null;
+
+        /**
+         * Returns the last element or last matching a predicate.
+         * Throws if the sequence is empty or no match is found.
+         * Equivalent to C# Enumerable.Last.
+         */
+        last(predicate?: (item: T, index: number, array: T[]) => boolean): T;
+
+        /**
+         * Returns the last element matching a predicate, or null.
+         * Equivalent to C# Enumerable.LastOrDefault.
+         */
+        lastOrDefault(predicate?: (item: T, index: number, array: T[]) => boolean): T | null;
+
+        /**
+         * Returns exactly one element.  Throws if count is not exactly one.
+         * Equivalent to C# Enumerable.Single.
+         */
+        single(predicate?: (item: T, index: number, array: T[]) => boolean): T;
+
+        /**
+         * Returns one element or null; throws if more than one matches.
+         * Equivalent to C# Enumerable.SingleOrDefault.
+         */
+        singleOrDefault(predicate?: (item: T, index: number, array: T[]) => boolean): T | null;
+
+        /**
+         * Returns true if any element matches the predicate or if the array is non-empty.
+         * Short-circuits on first match.
+         * Equivalent to C# Enumerable.Any.
+         */
+        any(predicate?: (item: T, index: number, array: T[]) => boolean): boolean;
+
+        /**
+         * Returns true if all elements satisfy the predicate.
+         * Equivalent to C# Enumerable.All.
+         */
+        all(predicate: (item: T, index: number, array: T[]) => boolean): boolean;
+
+        /**
+         * Returns true if the array contains the value (strict equality).
+         * Equivalent to C# Enumerable.Contains.
+         */
+        contains(value: T): boolean;
+
+        /**
+         * Returns the element at the specified zero-based index.
+         * Throws if out of bounds.
+         * Equivalent to C# Enumerable.ElementAt.
+         */
+        elementAt(index: number): T;
+
+        /**
+         * Returns the element at the specified index or null if out of bounds.
+         * Equivalent to C# Enumerable.ElementAtOrDefault.
+         */
+        elementAtOrDefault(index: number): T | null;
+
+        // -- Aggregation --
+
+        /**
+         * Counts elements or elements matching a predicate.
+         * Does not allocate an intermediate array.
+         * Equivalent to C# Enumerable.Count.
+         */
+        count(predicate?: (item: T, index: number, array: T[]) => boolean): number;
+
+        /**
+         * Sums all elements or projected values.
+         * Equivalent to C# Enumerable.Sum.
+         */
+        sum(selector?: (item: T, index: number, array: T[]) => number): number;
+
+        /**
+         * Returns the average of all elements or projected values.
+         * Equivalent to C# Enumerable.Average.
+         */
+        average(selector?: (item: T, index: number, array: T[]) => number): number;
+
+        /**
+         * Returns the minimum value or minimum projected value.
+         * Uses a loop to avoid stack overflow on large arrays.
+         * Equivalent to C# Enumerable.Min.
+         */
+        min(selector?: (item: T, index: number, array: T[]) => number): number;
+
+        /**
+         * Returns the maximum value or maximum projected value.
+         * Uses a loop to avoid stack overflow on large arrays.
+         * Equivalent to C# Enumerable.Max.
+         */
+        max(selector?: (item: T, index: number, array: T[]) => number): number;
+
+        /**
+         * Applies an accumulator function over the array.
+         * Equivalent to C# Enumerable.Aggregate.
+         */
+        aggregate<U>(accumulator: (acc: U, val: T) => U, seed: U): U;
+
+        // -- Sorting & Flow --
+
+        /**
+         * Sorts the array in ascending order by a key selector.
+         * Uses the Schwartzian transform (selector called once per element).
+         * Returns an Array with thenBy / thenByDesc for chaining.
+         * Equivalent to C# Enumerable.OrderBy.
+         */
+        orderBy<K>(selector: (item: T) => K): T[] & OrderedArray<T>;
+
+        /**
+         * Sorts the array in descending order by a key selector.
+         * Equivalent to C# Enumerable.OrderByDescending.
+         */
+        orderByDesc<K>(selector: (item: T) => K): T[] & OrderedArray<T>;
+
+        /**
+         * Returns the first n elements.
+         * Equivalent to C# Enumerable.Take.
+         */
+        take(n: number): T[];
+
+        /**
+         * Skips the first n elements.
+         * Equivalent to C# Enumerable.Skip.
+         */
+        skip(n: number): T[];
+
+        /**
+         * Takes elements while the predicate returns true, then stops.
+         * Equivalent to C# Enumerable.TakeWhile.
+         */
+        takeWhile(predicate: (item: T) => boolean): T[];
+
+        /**
+         * Skips elements while the predicate returns true, then yields the rest.
+         * Equivalent to C# Enumerable.SkipWhile.
+         */
+        skipWhile(predicate: (item: T) => boolean): T[];
+
+        // -- Set & Collection --
+
+        /**
+         * Returns a new array without duplicate elements.
+         * Equivalent to C# Enumerable.Distinct.
+         */
+        distinct(): T[];
+
+        /**
+         * Returns a new array without duplicates, using a key selector.
+         * Equivalent to C# Enumerable.DistinctBy.
+         */
+        distinctBy<K>(selector: (item: T) => K): T[];
+
+        /**
+         * Returns the set union of this array and another, without duplicates.
+         * Equivalent to C# Enumerable.Union.
+         */
+        union(other: T[]): T[];
+
+        /**
+         * Returns elements present in both this array and another.
+         * Equivalent to C# Enumerable.Intersect.
+         */
+        intersect(other: T[]): T[];
+
+        /**
+         * Returns elements from this array not present in another.
+         * Equivalent to C# Enumerable.Except.
+         */
+        except(other: T[]): T[];
+
+        // -- Joins & Grouping --
+
+        /**
+         * Performs a hash-based inner join with another array.
+         * Equivalent to C# Enumerable.Join.
+         */
+        innerJoin<U, K, R>(
+            inner: U[],
+            outerKeySelector: (item: T) => K,
+            innerKeySelector: (item: U) => K,
+            resultSelector: (outer: T, inner: U) => R
+        ): R[];
+
+        /**
+         * Performs a group join (left outer join with grouping) with another array.
+         * Equivalent to C# Enumerable.GroupJoin.
+         */
+        groupJoin<U, K, R>(
+            inner: U[],
+            outerKeySelector: (item: T) => K,
+            innerKeySelector: (item: U) => K,
+            resultSelector: (outer: T, inners: U[]) => R
+        ): R[];
+
+        /**
+         * Groups elements into a plain object keyed by the key selector.
+         * Equivalent to C# Enumerable.GroupBy.
+         */
+        groupBy<K extends string | number | symbol>(keySelector: (item: T) => K): Record<K, T[]>;
+
+        // -- Conversion & Utilities --
+
+        /**
+         * Converts the array to a plain object dictionary.
+         * Equivalent to C# .ToDictionary().
+         */
+        toDictionary<K extends string | number | symbol, V = T>(
+            keySelector: (item: T) => K,
+            valueSelector?: (item: T) => V
+        ): Record<K, V>;
+
+        /**
+         * Returns a new array with the item appended at the end.
+         * Equivalent to C# Enumerable.Append.
+         */
+        append(item: T): T[];
+
+        /**
+         * Returns a new array with the item prepended at the start.
+         * Equivalent to C# Enumerable.Prepend.
+         */
+        prepend(item: T): T[];
+
+        /**
+         * Returns this array if non-empty, or a single-element array with the default value.
+         * Equivalent to C# Enumerable.DefaultIfEmpty.
+         */
+        defaultIfEmpty(defaultValue: T): T[];
+
+        /**
+         * Returns true if this array and another are equal in sequence.
+         * Uses deep equality via JSON.stringify.
+         * Equivalent to C# Enumerable.SequenceEqual.
+         */
+        sequenceEqual(other: T[]): boolean;
+
+        /**
+         * Combines this array with another element-by-element.
+         * Stops at the shorter array.
+         * Equivalent to C# Enumerable.Zip.
+         */
+        zip<U, R = [T, U]>(other: U[], resultSelector?: (item1: T, item2: U) => R): R[];
+    }
 }
 
 export {};

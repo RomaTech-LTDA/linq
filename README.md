@@ -1,214 +1,271 @@
 # @romatech/linq
- 🧠 A comprehensive utility that extends Array.prototype with a rich set of methods for:
 
-- ✅ Projection & Transformation: select, selectMany, cast, ofType
+A lightweight library that extends JavaScript arrays with LINQ-style methods
+inspired by .NET's `System.Linq.Enumerable`.  It introduces a `LazyQuery`
+pipeline that defers execution until a terminal operator is called — the same
+model as `IEnumerable<T>` in C#.
 
-- ✅ Access & Query: where, first, firstOrDefault, last, lastOrDefault, single, singleOrDefault, any, all, contains, elementAt, elementAtOrDefault
+## How it works
 
-- ✅ Aggregation: count, sum, average, min, max, aggregate
+Calling methods like `where()`, `select()`, or `take()` on an array does not
+execute anything immediately.  Each call returns a `LazyQuery` object that
+records the operation.  Execution happens in a single pass only when a terminal
+operator such as `toArray()`, `first()`, or `count()` is invoked.
 
-- ✅ Sorting & Flow: orderBy, orderByDesc, thenBy, thenByDesc, take, skip, takeWhile, skipWhile
+```js
+// Nothing executes until .toArray() is called — just like C# LINQ.
+const result = users
+  .where(u => u.active)       // returns LazyQuery (deferred)
+  .select(u => u.name)        // returns LazyQuery (deferred)
+  .take(10)                   // returns LazyQuery (deferred)
+  .toArray();                 // single pass, stops after 10 results
+```
 
-- ✅ Set & Collection: distinct, distinctBy, union, intersect, except
+This avoids allocating intermediate arrays and short-circuits the source
+iteration as soon as the result is complete, matching the behaviour of C# LINQ.
 
-- ✅ Joins & Grouping: join, groupJoin, groupBy
+## Installation
 
-- ✅ Conversion & Utilities: toDictionary, append, prepend, defaultIfEmpty, sequenceEqual, zip
-
-Chainable, immutable, fully typed, and compatible with CommonJS and ES Modules.
-
->🧩 This package adds safe, non-enumerable methods to Array.prototype.
-
-  
-
-## 🚀 Installation
 ```bash
 npm install @romatech/linq
 ```
-  
 
-## 📦 Usage
->✅ You must import the package once to enable prototype extensions.
+## Usage
+
+Import once anywhere in your application to enable the prototype extensions.
 
 ### CommonJS
+
 ```js
 require('@romatech/linq');
-
-const numbers = [1, 2, 3, 4, 5];
-
-const result = numbers
-.where(x => x > 2)
-.orderByDesc(x => x)
-.take(2);
-
-console.log(result); // [5, 4]
 ```
 
 ### ES Modules
-```ts
+
+```js
 import '@romatech/linq';
+```
+
+### Basic pipeline (C#-style)
+
+```js
+require('@romatech/linq');
 
 const users = [
-  { name: 'Alice', age: 30 },
-  { name: 'Bob', age: 25 },
-  { name: 'Charlie', age: 30 },
+  { name: 'Alice', age: 30, active: true  },
+  { name: 'Bob',   age: 25, active: false },
+  { name: 'Carol', age: 30, active: true  },
+  { name: 'Dave',  age: 22, active: true  },
 ];
 
-const grouped = users.groupBy(u => u.age);
+// Exactly like C#: users.Where(...).OrderBy(...).Select(...).Take(...).ToList()
+const result = users
+  .where(u => u.active)
+  .orderBy(u => u.age)
+  .select(u => u.name)
+  .take(2)
+  .toArray();
 
-console.log(grouped);
-// {
-// 25: [{ name: 'Bob', age: 25 }],
-// 30: [{ name: 'Alice', age: 30 }, { name: 'Charlie', age: 30 }]
-// }
+console.log(result); // ['Dave', 'Alice']
 ```
 
-## 🧠 API
-### Projection & Transformation
-carray.select(fn) — Maps each element by the selector function.
-`array.selectMany(fn)` — Maps each element and flattens the result.
-`array.cast()` — Casts elements (identity).
-`array.ofType(type)` — Filters elements by JavaScript type.
+### Short-circuit with first()
 
-### Access & Query
-`array.where(predicate)` — Filters elements by predicate.
-`array.first(predicate?)` — Returns the first element matching predicate or first element.
-`array.firstOrDefault(predicate?)` — Like first but returns null if none.
-`array.last(predicate?)` — Returns the last element matching predicate or last element.
-`array.lastOrDefault(predicate?)` — Like last but returns null if none.
-`array.single(predicate?)` — Returns exactly one element matching predicate; throws if zero or multiple.
-`array.singleOrDefault(predicate?)` — Returns one or zero elements matching predicate; throws if multiple.
-`array.any(predicate?)` — Checks if any element matches predicate or if array has elements.
-`array.all(predicate)` — Checks if all elements satisfy predicate.
-`array.contains(value)` — Checks if value exists in array.
-`array.elementAt(index)` — Returns element at index; throws if out of bounds.
-`array.elementAtOrDefault(index)` — Returns element or null if out of bounds.
+```js
+// Stops iteration as soon as the first match is found.
+const user = users
+  .where(u => u.age > 28)
+  .first();
+
+console.log(user.name); // 'Alice'
+```
 
 ### Aggregation
-`array.count(predicate?)` — Counts elements matching predicate or total.
-`array.sum(selector?)` — Sums values or selected values.
-`array.average(selector?)` — Computes average of values or selected values.
-`array.min(selector?)` — Returns minimum value or selected values.
-`array.max(selector?)` — Returns maximum value or selected values.
-`array.aggregate(accumulator, seed)` — Aggregates values using accumulator function and seed.
 
-### Sorting & Flow
-`array.orderBy(fn)` — Sort ascending by selector.
-`array.orderByDesc(fn)` — Sort descending by selector.
-`array.thenBy(fn)` — Chain secondary ascending sort.
-`array.thenByDesc(fn)` — Chain secondary descending sort.
-`array.take(n)` — Takes first n elements.
-`array.skip(n)` — Skips first n elements.
-`array.takeWhile(predicate)` — Takes elements while predicate is true.
-`array.skipWhile(predicate)` — Skips elements while predicate is true.
+```js
+const groups = users.groupBy(u => u.age);
+// { 30: [...], 25: [...], 22: [...] }
 
-### Set & Collection
-`array.distinct()` — Removes deep-equal duplicates.
-`array.distinctBy(fn)` — Removes duplicates by selector return value.
-`array.union(otherArray)` — Union of arrays (unique).
-`array.intersect(otherArray)` — Intersection of arrays.
-`array.except(otherArray)` — Elements except those in otherArray.
-
-### Joins & Grouping
-`array.join(inner, outerKeySelector, innerKeySelector, resultSelector)` — Joins arrays on keys.
-`array.groupJoin(inner, outerKeySelector, innerKeySelector, resultSelector)` — Groups join results.
-`array.groupBy(keySelector)` — Groups elements by key.
-
-### Conversion & Utilities
-`array.toDictionary(keySelector, valueSelector?)` — Converts array to dictionary/object.
-`array.append(item)` — Returns new array with item appended.
-`array.prepend(item)` — Returns new array with item prepended.
-`array.defaultIfEmpty(defaultValue)` — Returns default if array empty.
-`array.sequenceEqual(other)` — Checks if arrays are deeply equal.
-`array.zip(other, resultSelector?) `— Combines arrays element-wise.
-
-## 🧱 TypeScript Support
-Fully typed with comprehensive definitions available.
-```ts
-type Selector<T> = (item: T) => any;
-
-interface OrderedArray<T> extends Array<T> {
-thenBy(fn: Selector<T>): OrderedArray<T>;
-thenByDesc(fn: Selector<T>): OrderedArray<T>;
-}
-
-interface Array<T> {
-select<U>(fn: (item: T) => U): U[];
-selectMany<U>(fn: (item: T) => U[]): U[];
-cast(): T[];
-ofType(type: string): T[];
-where(fn: (item: T) => boolean): T[];
-first(fn?: (item: T) => boolean): T | undefined;
-firstOrDefault(fn?: (item: T) => boolean): T | null;
-last(fn?: (item: T) => boolean): T | undefined;
-lastOrDefault(fn?: (item: T) => boolean): T | null;
-single(fn?: (item: T) => boolean): T;
-singleOrDefault(fn?: (item: T) => boolean): T | null;
-any(fn?: (item: T) => boolean): boolean;
-all(fn: (item: T) => boolean): boolean;
-contains(value: T): boolean;
-elementAt(index: number): T;
-elementAtOrDefault(index: number): T | null;
-count(fn?: (item: T) => boolean): number;
-sum(fn?: (item: T) => number): number;
-average(fn?: (item: T) => number): number;
-min(fn?: (item: T) => number): number;
-max(fn?: (item: T) => number): number;
-aggregate<U>(fn: (acc: U, val: T) => U, seed: U): U;
-orderBy(fn: (item: T) => any): OrderedArray<T>;
-orderByDesc(fn: (item: T) => any): OrderedArray<T>;
-thenBy(fn: (item: T) => any): OrderedArray<T>;
-thenByDesc(fn: (item: T) => any): OrderedArray<T>;
-take(n: number): T[];
-skip(n: number): T[];
-takeWhile(fn: (item: T) => boolean): T[];
-skipWhile(fn: (item: T) => boolean): T[];
-distinct(): T[];
-distinctBy(fn: (item: T) => any): T[];
-union(other: T[]): T[];
-intersect(other: T[]): T[];
-except(other: T[]): T[];
-join<U,  R>(
-  inner: U[],
-  outerKeySelector: (outer: T) => any,
-  innerKeySelector: (inner: U) => any,
-  resultSelector: (outer: T, inner: U) => R
-): R[];
-groupJoin<U,  R>(
-  inner: U[],
-  outerKeySelector: (outer: T) => any,
-  innerKeySelector: (inner: U) => any,
-  resultSelector: (outer: T, inners: U[]) => R
-): R[];
-groupBy<K  extends  keyof  any>(fn: (item: T) => K): Record<K,  T[]>;
-toDictionary<K  extends  keyof  any,  V>(keySelector: (item: T) => K, valueSelector?: (item: T) => V): Record<K,  V>;
-append(item: T): T[];
-prepend(item: T): T[];
-defaultIfEmpty(item: T): T[];
-sequenceEqual(other: T[]): boolean;
-zip<U,  R>(other: U[], resultSelector?: (a: T, b: U) => R): R[];
-}
+const totalAge = users.select(u => u.age).sum();   // 107
+const average  = users.select(u => u.age).average(); // 26.75
 ```
 
-## ✅ Compatibility
-- Node.js LTS (≥ v11 recommended; Node 18+ fully supported)
+### Joining
 
-- Works in browsers (via bundlers like Vite/Webpack)
+```js
+const orders = [
+  { userId: 1, amount: 100 },
+  { userId: 2, amount:  50 },
+];
 
-- Fully compatible with CommonJS and ESM
+const result = users.innerJoin(
+  orders,
+  u => u.id,
+  o => o.userId,
+  (u, o) => ({ name: u.name, amount: o.amount })
+);
+```
 
-## 🧪 Tests
+### Converting to other collections
+
+```js
+// To a Set
+const nameSet = users.select(u => u.name).toSet();
+
+// To a Map
+const byName = users.toMap(u => u.name);
+
+// To a plain dictionary object
+const dict = users.toDictionary(u => u.name, u => u.age);
+```
+
+## API reference
+
+Methods marked **intermediate** return a `LazyQuery` — nothing executes until
+a **terminal** is called.  Methods that operate directly on an `Array` and
+return a concrete value are **terminal**.
+
+### Intermediate operators (return LazyQuery)
+
+These are available on both `Array` and `LazyQuery`:
+
+| Method | C# equivalent | Description |
+|---|---|---|
+| `.where(predicate)` | `Where` | Filters elements by predicate. |
+| `.select(selector)` | `Select` | Projects each element into a new form. |
+| `.selectMany(selector)` | `SelectMany` | Projects and flattens. |
+| `.ofType(type)` | `OfType` | Filters elements by JavaScript `typeof`. |
+| `.take(n)` | `Take` | Returns the first n elements. Short-circuits. |
+| `.skip(n)` | `Skip` | Skips the first n elements. |
+| `.takeWhile(predicate)` | `TakeWhile` | Yields while predicate holds, then stops. |
+| `.skipWhile(predicate)` | `SkipWhile` | Skips while predicate holds, then yields rest. |
+| `.distinct()` | `Distinct` | Removes duplicate elements. |
+| `.distinctBy(selector)` | `DistinctBy` | Removes duplicates by key. |
+| `.union(other)` | `Union` | Set union without duplicates. |
+| `.intersect(other)` | `Intersect` | Elements present in both sequences. |
+| `.except(other)` | `Except` | Elements not in the other sequence. |
+| `.concat(other)` | `Concat` | Appends another sequence. |
+| `.zip(other, selector?)` | `Zip` | Combines two sequences element-by-element. |
+| `.append(item)` | `Append` | Appends a single item. |
+| `.prepend(item)` | `Prepend` | Prepends a single item. |
+| `.defaultIfEmpty(value)` | `DefaultIfEmpty` | Yields a default if empty. |
+| `.cast()` | `Cast` | Identity cast. |
+
+### Terminal operators
+
+Terminal operators consume the pipeline and return a concrete value:
+
+| Method | C# equivalent | Description |
+|---|---|---|
+| `.toArray()` | `ToList()` / `ToArray()` | Materialises into a plain Array. |
+| `.toSet()` | `ToHashSet()` | Materialises into a native `Set`. |
+| `.toMap(keyFn, valueFn?)` | `ToDictionary()` | Materialises into a native `Map`. |
+| `.toDictionary(keyFn, valueFn?)` | `ToDictionary()` | Materialises into a plain object. |
+| `.first(predicate?)` | `First` | First element or first match. Throws if empty. |
+| `.firstOrDefault(predicate?)` | `FirstOrDefault` | First match or `null`. |
+| `.last(predicate?)` | `Last` | Last element or last match. Throws if empty. |
+| `.lastOrDefault(predicate?)` | `LastOrDefault` | Last match or `null`. |
+| `.single(predicate?)` | `Single` | Exactly one match. Throws otherwise. |
+| `.singleOrDefault(predicate?)` | `SingleOrDefault` | One match or `null`. Throws if > 1. |
+| `.any(predicate?)` | `Any` | `true` if any match. Short-circuits. |
+| `.all(predicate)` | `All` | `true` if all match. Short-circuits on failure. |
+| `.contains(value)` | `Contains` | `true` if value is in the sequence. |
+| `.count(predicate?)` | `Count` | Element count. No intermediate array. |
+| `.sum(selector?)` | `Sum` | Sum of values. |
+| `.average(selector?)` | `Average` | Average of values. |
+| `.min(selector?)` | `Min` | Minimum. Safe for large sequences. |
+| `.max(selector?)` | `Max` | Maximum. Safe for large sequences. |
+| `.aggregate(fn, seed)` | `Aggregate` | Folds with accumulator. |
+| `.elementAt(index)` | `ElementAt` | Element at index. Throws if out of range. |
+| `.elementAtOrDefault(index)` | `ElementAtOrDefault` | Element at index or `null`. |
+| `.sequenceEqual(other)` | `SequenceEqual` | Element-by-element equality. |
+| `.orderBy(selector)` | `OrderBy` | Sorts ascending. Returns Array with `thenBy`/`thenByDesc`. |
+| `.orderByDesc(selector)` | `OrderByDescending` | Sorts descending. |
+| `.groupBy(keySelector)` | `GroupBy` | Groups into a plain object. |
+| `.innerJoin(inner, outerKey, innerKey, result)` | `Join` | Hash-based inner join. |
+| `.groupJoin(inner, outerKey, innerKey, result)` | `GroupJoin` | Left outer join with grouping. |
+
+### Sorting chain
+
+`orderBy` and `orderByDesc` return a plain Array extended with chaining:
+
+```js
+const sorted = people
+  .orderBy(p => p.lastName)
+  .thenBy(p => p.firstName)
+  .thenByDesc(p => p.age);
+```
+
+## C# comparison
+
+| C# | @romatech/linq |
+|---|---|
+| `users.Where(u => u.Active).Select(u => u.Name).Take(10).ToList()` | `users.where(u => u.active).select(u => u.name).take(10).toArray()` |
+| `users.First(u => u.Age > 30)` | `users.first(u => u.age > 30)` |
+| `users.OrderBy(u => u.Name).ThenByDescending(u => u.Age)` | `users.orderBy(u => u.name).thenByDesc(u => u.age)` |
+| `users.GroupBy(u => u.Department)` | `users.groupBy(u => u.department)` |
+| `users.Count(u => u.Active)` | `users.count(u => u.active)` |
+
+## Performance notes
+
+- **Single pass**: pipelines iterate the source exactly once when consumed,
+  regardless of how many intermediate operators are chained.
+- **Short-circuit**: `take`, `first`, `any`, and `all` stop iteration as soon
+  as the result is determined.
+- **No spread overflow**: `min` and `max` use a loop instead of
+  `Math.min(...array)`, making them safe for arrays with any number of elements.
+- **Schwartzian transform**: `orderBy` and `orderByDesc` call the key selector
+  once per element (O(n)) rather than once per comparison (O(n log n)).
+- **Set operations**: `distinct`, `union`, `intersect`, and `except` use `Set`
+  lookups. Primitives are stored directly (O(1)); objects fall back to
+  `JSON.stringify` for deep equality.
+
+## TypeScript support
+
+Full type definitions are included. The `LazyQuery<T>` class and the
+`OrderedArray<T>` interface are exported.
+
+```ts
+import '@romatech/linq';
+import { LazyQuery } from '@romatech/linq';
+
+interface User {
+  name: string;
+  age: number;
+  active: boolean;
+}
+
+const users: User[] = [ /* ... */ ];
+
+const names: string[] = users
+  .where(u => u.active)
+  .select(u => u.name)
+  .toArray();
+```
+
+## Compatibility
+
+- Node.js >= 11 (Node 18+ recommended)
+- Works in browsers via bundlers (Vite, Webpack, esbuild)
+- Compatible with CommonJS (`require`) and ES Modules (`import`)
+
+## Running tests
+
 ```bash
 npm install
 npm test
 ```
-All tests are implemented with [Jest](https://jestjs.io) and validate sorting logic and method chaining behavior.
 
-## ⚠️ Prototype Extension Warning
-This package extends `Array.prototype` with non-enumerable methods for rich querying and transformation.
+Tests are written with [Jest](https://jestjs.io) and cover both the
+`Array.prototype` extensions and the `LazyQuery` pipeline, including
+short-circuit behaviour and large-array safety.
 
->✅ Safe in most applications.
->❌ Avoid in libraries where global prototype changes are discouraged.
+## Prototype extension notice
 
-## 🪪 License
-MIT © RomaTech / Leandro Romanelli
+This package adds non-enumerable methods to `Array.prototype`.  The extensions
+are safe for application code.  Avoid using this package in libraries where
+modifying global prototypes is undesirable.
+
+## License
+
+MIT (c) RomaTech / Leandro Romanelli
