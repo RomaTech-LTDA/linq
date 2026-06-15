@@ -1,336 +1,868 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Array LINQ-style Extension Documentation</title>
+  <title>@romatech/linq - docs</title>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
   <style>
-    /* Reset and basic styles */
-    * {
-      box-sizing: border-box;
-    }
+    /* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+    /*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
     body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #e7e5e4;
-      color: #333;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      flex-direction: column;
+      font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+      font-size: var(--vscode-markdown-font-size, 14px);
+      padding: 0 26px;
+      line-height: var(--vscode-markdown-line-height, 22px);
+      word-wrap: break-word;
     }
 
-    /* Header */
-    header {
+    #code-csp-warning {
       position: fixed;
       top: 0;
-      left: 0;
       right: 0;
+      color: white;
+      margin: 16px;
+      text-align: center;
+      font-size: 12px;
+      font-family: sans-serif;
+      background-color: #444444;
+      cursor: pointer;
+      padding: 6px;
+      box-shadow: 1px 1px 1px rgba(0, 0, 0, .25);
+    }
+
+    #code-csp-warning:hover {
+      text-decoration: none;
+      background-color: #007acc;
+      box-shadow: 2px 2px 2px rgba(0, 0, 0, .25);
+    }
+
+    body.scrollBeyondLastLine {
+      margin-bottom: calc(100vh - 22px);
+    }
+
+    body.showEditorSelection .code-line {
+      position: relative;
+    }
+
+    body.showEditorSelection .code-active-line:before,
+    body.showEditorSelection .code-line:hover:before {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: -12px;
+      height: 100%;
+    }
+
+    body.showEditorSelection li.code-active-line:before,
+    body.showEditorSelection li.code-line:hover:before {
+      left: -30px;
+    }
+
+    .vscode-light.showEditorSelection .code-active-line:before {
+      border-left: 3px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .vscode-light.showEditorSelection .code-line:hover:before {
+      border-left: 3px solid rgba(0, 0, 0, 0.40);
+    }
+
+    .vscode-light.showEditorSelection .code-line .code-line:hover:before {
+      border-left: none;
+    }
+
+    .vscode-dark.showEditorSelection .code-active-line:before {
+      border-left: 3px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .vscode-dark.showEditorSelection .code-line:hover:before {
+      border-left: 3px solid rgba(255, 255, 255, 0.60);
+    }
+
+    .vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+      border-left: none;
+    }
+
+    .vscode-high-contrast.showEditorSelection .code-active-line:before {
+      border-left: 3px solid rgba(255, 160, 0, 0.7);
+    }
+
+    .vscode-high-contrast.showEditorSelection .code-line:hover:before {
+      border-left: 3px solid rgba(255, 160, 0, 1);
+    }
+
+    .vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+      border-left: none;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 1px solid -webkit-focus-ring-color;
+      outline-offset: -1px;
+    }
+
+    hr {
+      border: 0;
+      height: 2px;
+      border-bottom: 2px solid;
+    }
+
+    h1 {
+      padding-bottom: 0.3em;
+      line-height: 1.2;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: normal;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    table>thead>tr>th {
+      text-align: left;
+      border-bottom: 1px solid;
+    }
+
+    table>thead>tr>th,
+    table>thead>tr>td,
+    table>tbody>tr>th,
+    table>tbody>tr>td {
+      padding: 5px 10px;
+    }
+
+    table>tbody>tr+tr>td {
+      border-top: 1px solid;
+    }
+
+    blockquote {
+      margin: 0 7px 0 5px;
+      padding: 0 16px 0 10px;
+      border-left-width: 5px;
+      border-left-style: solid;
+    }
+
+    code {
+      font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+      font-size: 1em;
+      line-height: 1.357em;
+    }
+
+    body.wordWrap pre {
+      white-space: pre-wrap;
+    }
+
+    pre:not(.hljs),
+    pre.hljs code>div {
+      padding: 16px;
+      border-radius: 3px;
+      overflow: auto;
+    }
+
+    pre code {
+      color: var(--vscode-editor-foreground);
+      tab-size: 4;
+    }
+
+    /** Theming */
+
+    .vscode-light pre {
+      background-color: rgba(220, 220, 220, 0.4);
+    }
+
+    .vscode-dark pre {
+      background-color: rgba(10, 10, 10, 0.4);
+    }
+
+    .vscode-high-contrast pre {
+      background-color: rgb(0, 0, 0);
+    }
+
+    .vscode-high-contrast h1 {
+      border-color: rgb(0, 0, 0);
+    }
+
+    .vscode-light table>thead>tr>th {
+      border-color: rgba(0, 0, 0, 0.69);
+    }
+
+    .vscode-dark table>thead>tr>th {
+      border-color: rgba(255, 255, 255, 0.69);
+    }
+
+    .vscode-light h1,
+    .vscode-light hr,
+    .vscode-light table>tbody>tr+tr>td {
+      border-color: rgba(0, 0, 0, 0.18);
+    }
+
+    .vscode-dark h1,
+    .vscode-dark hr,
+    .vscode-dark table>tbody>tr+tr>td {
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+  </style>
+
+  <style>
+    /* Tomorrow Theme */
+    /* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+    /* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+    /* Tomorrow Comment */
+    .hljs-comment,
+    .hljs-quote {
+      color: #8e908c;
+    }
+
+    /* Tomorrow Red */
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-tag,
+    .hljs-name,
+    .hljs-selector-id,
+    .hljs-selector-class,
+    .hljs-regexp,
+    .hljs-deletion {
+      color: #c82829;
+    }
+
+    /* Tomorrow Orange */
+    .hljs-number,
+    .hljs-built_in,
+    .hljs-builtin-name,
+    .hljs-literal,
+    .hljs-type,
+    .hljs-params,
+    .hljs-meta,
+    .hljs-link {
+      color: #f5871f;
+    }
+
+    /* Tomorrow Yellow */
+    .hljs-attribute {
+      color: #eab700;
+    }
+
+    /* Tomorrow Green */
+    .hljs-string,
+    .hljs-symbol,
+    .hljs-bullet,
+    .hljs-addition {
+      color: #718c00;
+    }
+
+    /* Tomorrow Blue */
+    .hljs-title,
+    .hljs-section {
+      color: #4271ae;
+    }
+
+    /* Tomorrow Purple */
+    .hljs-keyword,
+    .hljs-selector-tag {
+      color: #8959a8;
+    }
+
+    .hljs {
+      display: block;
+      overflow-x: auto;
+      color: #4d4d4c;
+      padding: 0.5em;
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+
+    .hljs-strong {
+      font-weight: bold;
+    }
+  </style>
+
+  <style>
+    /*
+ * Markdown PDF CSS
+ */
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+      padding: 0 12px;
+    }
+
+    pre {
+      background-color: #f8f8f8;
+      border: 1px solid #cccccc;
+      border-radius: 3px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+
+    pre:not(.hljs) {
+      padding: 23px;
+      line-height: 19px;
+    }
+
+    blockquote {
+      background: rgba(127, 127, 127, 0.1);
+      border-color: rgba(0, 122, 204, 0.5);
+    }
+
+    .emoji {
+      height: 1.4em;
+    }
+
+    code {
+      font-size: 14px;
+      line-height: 19px;
+    }
+
+    /* for inline code */
+    :not(pre):not(.hljs)>code {
+      color: #C9AE75;
+      /* Change the old color so it seems less like an error */
+      font-size: inherit;
+    }
+
+    /* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+    .page {
+      page-break-after: always;
+    }
+
+    header {
       height: 60px;
-      background: #6e23d1;
-      color: #e7e5e4;
       display: flex;
       align-items: center;
       padding: 0 1rem;
       gap: 1rem;
       z-index: 1000;
     }
+
     header img {
       height: 60px;
       width: auto;
     }
+
     header h1 {
       font-size: 1.25rem;
       margin: 0;
       flex-grow: 1;
       user-select: none;
     }
+
     header nav.links {
       display: flex;
       gap: 1rem;
     }
+
     header nav.links a {
-      color: #e7e5e4;
       text-decoration: none;
       font-weight: 600;
-      border: 1px solid #e7e5e4;
+      border: 1px solid;
       padding: 0.25rem 0.75rem;
       border-radius: 4px;
       transition: background-color 0.3s;
     }
+
     header nav.links a:hover,
     header nav.links a:focus {
       background-color: rgba(255 255 255 / 0.3);
       outline: none;
     }
-
-    /* Layout below header */
-    #main-wrapper {
-      display: flex;
-      flex-grow: 1;
-      margin-top: 60px; /* space for fixed header */
-      height: calc(100vh - 60px);
-      overflow: hidden;
-    }
-
-    /* Sidebar */
-    nav#sidebar {
-      background: #e7e5e4;
-      border-right: 1px solid #ccc;
-      width: 280px;
-      min-width: 280px;
-      max-width: 280px;
-      display: flex;
-      flex-direction: column;
-      transition: width 0.3s ease;
-      overflow: hidden;
-    }
-    nav#sidebar.collapsed {
-      width: 50px;
-      min-width: 50px;
-      max-width: 50px;
-    }
-    /* Toggle button */
-    #toggleBtn {
-      background: #6e23d1;
-      color: #e7e5e4;
-      border: none;
-      padding: 0.75rem;
-      cursor: pointer;
-      font-size: 1.2rem;
-      text-align: center;
-      user-select: none;
-      outline: none;
-      border-radius: 0 5px 5px 0;
-      transition: background 0.3s;
-      display: none;
-    }
-    #toggleBtn:hover {
-      background: #501997;
-    }
-    /* Search input */
-    #search {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin: 0.75rem 1rem;
-      width: calc(100% - 2rem);
-      font-size: 1rem;
-      transition: opacity 0.3s;
-    }
-    nav#sidebar.collapsed #search {
-      opacity: 0;
-      pointer-events: none;
-      height: 0;
-      margin: 0;
-      padding: 0;
-      border: none;
-    }
-    /* Method list */
-    #methodList {
-      list-style: none;
-      padding-left: 0;
-      margin: 0 0 1rem 0;
-      overflow-y: auto;
-      flex-grow: 1;
-    }
-    nav#sidebar.collapsed #methodList {
-      display: none;
-    }
-    #methodList li {
-      margin: 0 0 0.25rem 0;
-    }
-    #methodList a {
-      display: block;
-      text-decoration: none;
-      color: #6e23d1;
-      padding: 0.5rem 1rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: background 0.2s;
-      font-weight: bold;
-    }
-    #methodList a:hover,
-    #methodList a:focus {
-      background: #e7e5e4;
-      outline: none;
-    }
-
-    /* Content area */
-    #content {
-      flex-grow: 1;
-      overflow-y: auto;
-      padding: 2rem;
-      max-width: 100%;
-    }
-
-    /* Heading styles */
-    h1 {
-      color: #2c3e50;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 0.25rem;
-      margin-top: 0;
-    }
-    h2 {
-      margin-top: 2rem;
-      color: #6e23d1;
-    }
-
-    /* Code blocks */
-    pre {
-      background: #f4f4f4;
-      padding: 1rem;
-      overflow-x: auto;
-      border-left: 4px solid #3498db;
-      margin-top: 0.5rem;
-      border-radius: 4px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    code {
-      font-family: Consolas, monospace;
-    }
-    section {
-      margin-bottom: 2.5rem;
-    }
-    .hidden {
-      display: none !important;
-    }
   </style>
+
+  <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
 </head>
+
 <body>
-  <header>
-    <img src="logo.png" alt="RomaTech Logo" />
-    <h1>&nbsp;</h1>
-    <nav class="links" aria-label="External links">
-      <a href="https://github.com/RomaTech-LTDA/linq" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">GitHub</a>
-      <a href="https://www.npmjs.com/package/@romatech/linq" target="_blank" rel="noopener noreferrer" aria-label="NPM package page">NPM</a>
-    </nav>
-  </header>
-
-  <div id="main-wrapper">
-    <nav id="sidebar" aria-label="Method navigation">
-      <button id="toggleBtn" aria-label="Toggle menu">&#9776;</button>
-      <input type="text" id="search" placeholder="Search methods..." aria-label="Search methods" />
-      <ul id="methodList" role="navigation"></ul>
-    </nav>
-
-    <main id="content" tabindex="-1" role="main" aria-label="Documentation content">
-      <h1>RomaTech - LINQ-style Array Extension Methods</h1>
-    </main>
-  </div>
-
   <script>
-    const methods = [
-      { name: 'select', desc: 'Transforms each item in the array using a function.', example: '[1, 2, 3].select(x => x * 2);\n// [2, 4, 6]' },
-      { name: 'selectMany', desc: 'Flattens arrays returned from each item.', example: '[[1], [2, 3]].selectMany(x => x);\n// [1, 2, 3]' },
-      { name: 'cast', desc: 'Returns a shallow copy of the array (no change to the data).', example: "['a', 1, true].cast();\n// ['a', 1, true]" },
-      { name: 'ofType', desc: 'Filters elements by JavaScript type.', example: "['a', 1, true].ofType('string');\n// ['a']" },
-      { name: 'where', desc: 'Keeps only the elements that match a condition.', example: '[1, 2, 3].where(x => x > 1);\n// [2, 3]' },
-      { name: 'first', desc: 'Gets the first item, or the first matching one.', example: '[1, 2, 3].first();\n// 1\n[1, 2, 3].first(x => x > 1);\n// 2' },
-      { name: 'firstOrDefault', desc: 'Same as first, but returns null if not found.', example: '[].firstOrDefault();\n// null' },
-      { name: 'last', desc: 'Gets the last item, or last matching one.', example: '[1, 2, 3].last();\n// 3' },
-      { name: 'lastOrDefault', desc: 'Like last, but returns null if not found.', example: '[].lastOrDefault();\n// null' },
-      { name: 'single', desc: 'Returns the only matching item. Throws if more than one.', example: '[42].single();\n// 42' },
-      { name: 'singleOrDefault', desc: 'Same as single, but returns null if not found. Still throws if multiple.', example: '[1, 2, 3].singleOrDefault(x => x === 5);\n// null' },
-      { name: 'any', desc: "Checks if there's at least one item or one match.", example: '[1, 2, 3].any();\n// true' },
-      { name: 'all', desc: 'Returns true only if every item matches the condition.', example: '[1, 2, 3].all(x => x > 0);\n// true' },
-      { name: 'contains', desc: 'Checks if the array includes a specific value.', example: '[1, 2, 3].contains(2);\n// true' },
-      { name: 'elementAt', desc: 'Returns the element at a given index. Throws if out of range.', example: '[1, 2, 3].elementAt(1);\n// 2' },
-      { name: 'elementAtOrDefault', desc: 'Returns the item at index or null if out of bounds.', example: '[1, 2, 3].elementAtOrDefault(10);\n// null' },
-      { name: 'count', desc: 'Returns the number of elements, optionally filtered by a condition.', example: '[1, 2, 3, 4].count(x => x % 2 === 0);\n// 2' },
-      { name: 'sum', desc: 'Sums all elements or selected values.', example: '[1, 2, 3].sum();\n// 6\n[{val:10},{val:20}].sum(x => x.val);\n// 30' },
-      { name: 'average', desc: 'Calculates the average of elements or selected values.', example: '[1, 2, 3].average();\n// 2\n[{val:10},{val:20}].average(x => x.val);\n// 15' },
-      { name: 'min', desc: 'Returns the minimum value.', example: '[1, 2, 3].min();\n// 1\n[{val:10},{val:20}].min(x => x.val);\n// 10' },
-      { name: 'max', desc: 'Returns the maximum value.', example: '[1, 2, 3].max();\n// 3\n[{val:10},{val:20}].max(x => x.val);\n// 20' },
-      { name: 'aggregate', desc: 'Aggregates elements using an accumulator function.', example: '[1, 2, 3].aggregate((acc, x) => acc + x, 0);\n// 6' },
-      { name: 'orderBy', desc: 'Sorts elements in ascending order based on a selector.', example: '[3, 1, 2].orderBy();\n// [1, 2, 3]\n[{val:2},{val:1}].orderBy(x => x.val);\n// [{val:1},{val:2}]' },
-      { name: 'orderByDesc', desc: 'Sorts elements in descending order based on a selector.', example: '[1, 3, 2].orderByDesc();\n// [3, 2, 1]' },
-      { name: 'thenBy', desc: 'Adds a secondary ascending sort to an already sorted array.', example: 'arr.orderBy(x => x.a).thenBy(x => x.b);' },
-      { name: 'thenByDesc', desc: 'Adds a secondary descending sort to an already sorted array.', example: 'arr.orderBy(x => x.a).thenByDesc(x => x.b);' },
-      { name: 'take', desc: 'Returns the first n elements.', example: '[1, 2, 3, 4].take(2);\n// [1, 2]' },
-      { name: 'skip', desc: 'Skips the first n elements.', example: '[1, 2, 3, 4].skip(2);\n// [3, 4]' },
-      { name: 'takeWhile', desc: 'Takes elements while the predicate is true.', example: '[1, 2, 3, 4].takeWhile(x => x < 3);\n// [1, 2]' },
-      { name: 'skipWhile', desc: 'Skips elements while the predicate is true.', example: '[1, 2, 3, 4].skipWhile(x => x < 3);\n// [3, 4]' },
-      { name: 'distinct', desc: 'Removes duplicate elements.', example: '[1, 2, 2, 3].distinct();\n// [1, 2, 3]' },
-      { name: 'distinctBy', desc: 'Removes duplicates using a selector function.', example: '[{id:1},{id:2},{id:1}].distinctBy(x => x.id);\n// [{id:1},{id:2}]' },
-      { name: 'union', desc: 'Combines elements from two arrays, removing duplicates.', example: '[1, 2].union([2, 3]);\n// [1, 2, 3]' },
-      { name: 'intersect', desc: 'Returns elements present in both arrays.', example: '[1, 2, 3].intersect([2, 3, 4]);\n// [2, 3]' },
-      { name: 'except', desc: 'Returns elements in current array not in the other.', example: '[1, 2, 3].except([2, 3]);\n// [1]' },
-      { name: 'join', desc: 'Performs an inner join on two arrays.', example: `['a', 'b', 'c'].join(['a', 'c'], x => x, x => x, (o, i) => o + i);\n// ['aa', 'cc']` },
-      { name: 'groupJoin', desc: 'Performs a group join on two arrays.', example: `['a', 'b'].groupJoin(['a', 'a', 'c'], x => x, x => x, (o, i) => [o, i.length]);\n// [['a', 2], ['b', 0]]` },
-      { name: 'groupBy', desc: 'Groups elements by a key selector.', example: `[{id:1},{id:2},{id:1}].groupBy(x => x.id);\n// { '1': [{id:1}, {id:1}], '2': [{id:2}] }` },
-      { name: 'toDictionary', desc: 'Converts array to an object dictionary.', example: `[{id:'a', val:1}, {id:'b', val:2}].toDictionary(x => x.id, x => x.val);\n// { a: 1, b: 2 }` },
-      { name: 'append', desc: 'Appends an item to the end of the array.', example: '[1, 2].append(3);\n// [1, 2, 3]' },
-      { name: 'prepend', desc: 'Prepends an item to the beginning of the array.', example: '[1, 2].prepend(0);\n// [0, 1, 2]' },
-      { name: 'defaultIfEmpty', desc: 'Returns original array or a default if empty.', example: '[].defaultIfEmpty(0);\n// [0]' },
-      { name: 'sequenceEqual', desc: 'Checks whether another array has the same sequence.', example: '[1, 2, 3].sequenceEqual([1, 2, 3]);\n// true' },
-      { name: 'zip', desc: 'Combines two arrays element-by-element.', example: '[1, 2].zip([\'a\', \'b\'], (x, y) => x + y);\n// [\'1a\', \'2b\']' },
-    ];
-
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleBtn');
-    const methodList = document.getElementById('methodList');
-    const content = document.getElementById('content');
-    const searchInput = document.getElementById('search');
-
-    // Populate navigation and content sections
-    methods.forEach(method => {
-      // Nav link
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = `#${method.name}`;
-      a.textContent = method.name;
-      a.setAttribute('tabindex', '0');
-      li.appendChild(a);
-      methodList.appendChild(li);
-
-      // Doc section
-      const section = document.createElement('section');
-      section.id = method.name;
-      const h2 = document.createElement('h2');
-      h2.textContent = method.name;
-      const p = document.createElement('p');
-      p.textContent = method.desc;
-      const pre = document.createElement('pre');
-      const code = document.createElement('code');
-      code.textContent = method.example;
-      pre.appendChild(code);
-
-      section.appendChild(h2);
-      section.appendChild(p);
-      section.appendChild(pre);
-      content.appendChild(section);
-    });
-
-    // Toggle sidebar width
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      if (sidebar.classList.contains('collapsed')) {
-        content.focus();
-      } else {
-        searchInput.focus();
-      }
-    });
-
-    // Search filter function
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.toLowerCase();
-      methods.forEach(method => {
-        const section = document.getElementById(method.name);
-        const match = method.name.toLowerCase().includes(query) || method.desc.toLowerCase().includes(query) || method.example.toLowerCase().includes(query);
-        section.classList.toggle('hidden', !match);
-
-        // Also hide/show nav items
-        const navLinks = methodList.querySelectorAll('a');
-        navLinks.forEach(link => {
-          if(link.textContent === method.name) {
-            link.parentElement.style.display = match ? '' : 'none';
-          }
-        });
-      });
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+        ? 'dark'
+        : 'default'
     });
   </script>
+  <header>
+    <img src="logo.png" alt="RomaTech Logo" />
+    <h1 id="romatechlinq">@romatech/linq</h1>
+    <nav class="links" aria-label="External links">
+      <a href="https://github.com/RomaTech-LTDA/linq" target="_blank" rel="noopener noreferrer"
+        aria-label="GitHub repository">GitHub</a>
+      <a href="https://www.npmjs.com/package/@romatech/linq" target="_blank" rel="noopener noreferrer"
+        aria-label="NPM package page">NPM</a>
+    </nav>
+  </header>
+  <p>A lightweight library that extends JavaScript arrays with LINQ-style methods
+    inspired by .NET's <code>System.Linq.Enumerable</code>. It introduces a <code>LazyQuery</code>
+    pipeline that defers execution until a terminal operator is called — the same
+    model as <code>IEnumerable&lt;T&gt;</code> in C#.</p>
+  <h2 id="how-it-works">How it works</h2>
+  <p>Calling methods like <code>where()</code>, <code>select()</code>, or <code>take()</code> on an array does not
+    execute anything immediately. Each call returns a <code>LazyQuery</code> object that
+    records the operation. Execution happens in a single pass only when a terminal
+    operator such as <code>toArray()</code>, <code>first()</code>, or <code>count()</code> is invoked.</p>
+  <pre class="hljs"><code><div><span class="hljs-comment">// Nothing executes until .toArray() is called — just like C# LINQ.</span>
+<span class="hljs-keyword">const</span> result = users
+  .<span class="hljs-title function_">where</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">active</span>)       <span class="hljs-comment">// returns LazyQuery (deferred)</span>
+  .<span class="hljs-title function_">select</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">name</span>)        <span class="hljs-comment">// returns LazyQuery (deferred)</span>
+  .<span class="hljs-title function_">take</span>(<span class="hljs-number">10</span>)                   <span class="hljs-comment">// returns LazyQuery (deferred)</span>
+  .<span class="hljs-title function_">toArray</span>();                 <span class="hljs-comment">// single pass, stops after 10 results</span>
+</div></code></pre>
+  <p>This avoids allocating intermediate arrays and short-circuits the source
+    iteration as soon as the result is complete, matching the behaviour of C# LINQ.</p>
+  <h2 id="installation">Installation</h2>
+  <pre class="hljs"><code><div>npm install @romatech/linq
+</div></code></pre>
+  <h2 id="usage">Usage</h2>
+  <p>Import once anywhere in your application to enable the prototype extensions.</p>
+  <h3 id="commonjs">CommonJS</h3>
+  <pre class="hljs"><code><div><span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;@romatech/linq&#x27;</span>);
+</div></code></pre>
+  <h3 id="es-modules">ES Modules</h3>
+  <pre class="hljs"><code><div><span class="hljs-keyword">import</span> <span class="hljs-string">&#x27;@romatech/linq&#x27;</span>;
+</div></code></pre>
+  <h3 id="basic-pipeline-c-style">Basic pipeline (C#-style)</h3>
+  <pre class="hljs"><code><div><span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;@romatech/linq&#x27;</span>);
+
+<span class="hljs-keyword">const</span> users = [
+  { <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;Alice&#x27;</span>, <span class="hljs-attr">age</span>: <span class="hljs-number">30</span>, <span class="hljs-attr">active</span>: <span class="hljs-literal">true</span>  },
+  { <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;Bob&#x27;</span>,   <span class="hljs-attr">age</span>: <span class="hljs-number">25</span>, <span class="hljs-attr">active</span>: <span class="hljs-literal">false</span> },
+  { <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;Carol&#x27;</span>, <span class="hljs-attr">age</span>: <span class="hljs-number">30</span>, <span class="hljs-attr">active</span>: <span class="hljs-literal">true</span>  },
+  { <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;Dave&#x27;</span>,  <span class="hljs-attr">age</span>: <span class="hljs-number">22</span>, <span class="hljs-attr">active</span>: <span class="hljs-literal">true</span>  },
+];
+
+<span class="hljs-comment">// Exactly like C#: users.Where(...).OrderBy(...).Select(...).Take(...).ToList()</span>
+<span class="hljs-keyword">const</span> result = users
+  .<span class="hljs-title function_">where</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">active</span>)
+  .<span class="hljs-title function_">orderBy</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">age</span>)
+  .<span class="hljs-title function_">select</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">name</span>)
+  .<span class="hljs-title function_">take</span>(<span class="hljs-number">2</span>)
+  .<span class="hljs-title function_">toArray</span>();
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(result); <span class="hljs-comment">// [&#x27;Dave&#x27;, &#x27;Alice&#x27;]</span>
+</div></code></pre>
+  <h3 id="short-circuit-with-first">Short-circuit with first()</h3>
+  <pre class="hljs"><code><div><span class="hljs-comment">// Stops iteration as soon as the first match is found.</span>
+<span class="hljs-keyword">const</span> user = users
+  .<span class="hljs-title function_">where</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">age</span> &gt; <span class="hljs-number">28</span>)
+  .<span class="hljs-title function_">first</span>();
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(user.<span class="hljs-property">name</span>); <span class="hljs-comment">// &#x27;Alice&#x27;</span>
+</div></code></pre>
+  <h3 id="aggregation">Aggregation</h3>
+  <pre class="hljs"><code><div><span class="hljs-keyword">const</span> groups = users.<span class="hljs-title function_">groupBy</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">age</span>);
+<span class="hljs-comment">// { 30: [...], 25: [...], 22: [...] }</span>
+
+<span class="hljs-keyword">const</span> totalAge = users.<span class="hljs-title function_">select</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">age</span>).<span class="hljs-title function_">sum</span>();   <span class="hljs-comment">// 107</span>
+<span class="hljs-keyword">const</span> average  = users.<span class="hljs-title function_">select</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">age</span>).<span class="hljs-title function_">average</span>(); <span class="hljs-comment">// 26.75</span>
+</div></code></pre>
+  <h3 id="joining">Joining</h3>
+  <pre class="hljs"><code><div><span class="hljs-keyword">const</span> orders = [
+  { <span class="hljs-attr">userId</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">amount</span>: <span class="hljs-number">100</span> },
+  { <span class="hljs-attr">userId</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">amount</span>:  <span class="hljs-number">50</span> },
+];
+
+<span class="hljs-keyword">const</span> result = users.<span class="hljs-title function_">innerJoin</span>(
+  orders,
+  <span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">id</span>,
+  <span class="hljs-function"><span class="hljs-params">o</span> =&gt;</span> o.<span class="hljs-property">userId</span>,
+  <span class="hljs-function">(<span class="hljs-params">u, o</span>) =&gt;</span> ({ <span class="hljs-attr">name</span>: u.<span class="hljs-property">name</span>, <span class="hljs-attr">amount</span>: o.<span class="hljs-property">amount</span> })
+);
+</div></code></pre>
+  <h3 id="converting-to-other-collections">Converting to other collections</h3>
+  <pre class="hljs"><code><div><span class="hljs-comment">// To a Set</span>
+<span class="hljs-keyword">const</span> nameSet = users.<span class="hljs-title function_">select</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">name</span>).<span class="hljs-title function_">toSet</span>();
+
+<span class="hljs-comment">// To a Map</span>
+<span class="hljs-keyword">const</span> byName = users.<span class="hljs-title function_">toMap</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">name</span>);
+
+<span class="hljs-comment">// To a plain dictionary object</span>
+<span class="hljs-keyword">const</span> dict = users.<span class="hljs-title function_">toDictionary</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">name</span>, <span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">age</span>);
+</div></code></pre>
+  <h2 id="api-reference">API reference</h2>
+  <p>Methods marked <strong>intermediate</strong> return a <code>LazyQuery</code> — nothing executes until
+    a <strong>terminal</strong> is called. Methods that operate directly on an <code>Array</code> and
+    return a concrete value are <strong>terminal</strong>.</p>
+  <h3 id="intermediate-operators-return-lazyquery">Intermediate operators (return LazyQuery)</h3>
+  <p>These are available on both <code>Array</code> and <code>LazyQuery</code>:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>C# equivalent</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>.where(predicate)</code></td>
+        <td><code>Where</code></td>
+        <td>Filters elements by predicate.</td>
+      </tr>
+      <tr>
+        <td><code>.select(selector)</code></td>
+        <td><code>Select</code></td>
+        <td>Projects each element into a new form.</td>
+      </tr>
+      <tr>
+        <td><code>.selectMany(selector)</code></td>
+        <td><code>SelectMany</code></td>
+        <td>Projects and flattens.</td>
+      </tr>
+      <tr>
+        <td><code>.ofType(type)</code></td>
+        <td><code>OfType</code></td>
+        <td>Filters elements by JavaScript <code>typeof</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.take(n)</code></td>
+        <td><code>Take</code></td>
+        <td>Returns the first n elements. Short-circuits.</td>
+      </tr>
+      <tr>
+        <td><code>.skip(n)</code></td>
+        <td><code>Skip</code></td>
+        <td>Skips the first n elements.</td>
+      </tr>
+      <tr>
+        <td><code>.takeWhile(predicate)</code></td>
+        <td><code>TakeWhile</code></td>
+        <td>Yields while predicate holds, then stops.</td>
+      </tr>
+      <tr>
+        <td><code>.skipWhile(predicate)</code></td>
+        <td><code>SkipWhile</code></td>
+        <td>Skips while predicate holds, then yields rest.</td>
+      </tr>
+      <tr>
+        <td><code>.distinct()</code></td>
+        <td><code>Distinct</code></td>
+        <td>Removes duplicate elements.</td>
+      </tr>
+      <tr>
+        <td><code>.distinctBy(selector)</code></td>
+        <td><code>DistinctBy</code></td>
+        <td>Removes duplicates by key.</td>
+      </tr>
+      <tr>
+        <td><code>.union(other)</code></td>
+        <td><code>Union</code></td>
+        <td>Set union without duplicates.</td>
+      </tr>
+      <tr>
+        <td><code>.intersect(other)</code></td>
+        <td><code>Intersect</code></td>
+        <td>Elements present in both sequences.</td>
+      </tr>
+      <tr>
+        <td><code>.except(other)</code></td>
+        <td><code>Except</code></td>
+        <td>Elements not in the other sequence.</td>
+      </tr>
+      <tr>
+        <td><code>.concat(other)</code></td>
+        <td><code>Concat</code></td>
+        <td>Appends another sequence.</td>
+      </tr>
+      <tr>
+        <td><code>.zip(other, selector?)</code></td>
+        <td><code>Zip</code></td>
+        <td>Combines two sequences element-by-element.</td>
+      </tr>
+      <tr>
+        <td><code>.append(item)</code></td>
+        <td><code>Append</code></td>
+        <td>Appends a single item.</td>
+      </tr>
+      <tr>
+        <td><code>.prepend(item)</code></td>
+        <td><code>Prepend</code></td>
+        <td>Prepends a single item.</td>
+      </tr>
+      <tr>
+        <td><code>.defaultIfEmpty(value)</code></td>
+        <td><code>DefaultIfEmpty</code></td>
+        <td>Yields a default if empty.</td>
+      </tr>
+      <tr>
+        <td><code>.cast()</code></td>
+        <td><code>Cast</code></td>
+        <td>Identity cast.</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 id="terminal-operators">Terminal operators</h3>
+  <p>Terminal operators consume the pipeline and return a concrete value:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>C# equivalent</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>.toArray()</code></td>
+        <td><code>ToList()</code> / <code>ToArray()</code></td>
+        <td>Materialises into a plain Array.</td>
+      </tr>
+      <tr>
+        <td><code>.toSet()</code></td>
+        <td><code>ToHashSet()</code></td>
+        <td>Materialises into a native <code>Set</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.toMap(keyFn, valueFn?)</code></td>
+        <td><code>ToDictionary()</code></td>
+        <td>Materialises into a native <code>Map</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.toDictionary(keyFn, valueFn?)</code></td>
+        <td><code>ToDictionary()</code></td>
+        <td>Materialises into a plain object.</td>
+      </tr>
+      <tr>
+        <td><code>.first(predicate?)</code></td>
+        <td><code>First</code></td>
+        <td>First element or first match. Throws if empty.</td>
+      </tr>
+      <tr>
+        <td><code>.firstOrDefault(predicate?)</code></td>
+        <td><code>FirstOrDefault</code></td>
+        <td>First match or <code>null</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.last(predicate?)</code></td>
+        <td><code>Last</code></td>
+        <td>Last element or last match. Throws if empty.</td>
+      </tr>
+      <tr>
+        <td><code>.lastOrDefault(predicate?)</code></td>
+        <td><code>LastOrDefault</code></td>
+        <td>Last match or <code>null</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.single(predicate?)</code></td>
+        <td><code>Single</code></td>
+        <td>Exactly one match. Throws otherwise.</td>
+      </tr>
+      <tr>
+        <td><code>.singleOrDefault(predicate?)</code></td>
+        <td><code>SingleOrDefault</code></td>
+        <td>One match or <code>null</code>. Throws if &gt; 1.</td>
+      </tr>
+      <tr>
+        <td><code>.any(predicate?)</code></td>
+        <td><code>Any</code></td>
+        <td><code>true</code> if any match. Short-circuits.</td>
+      </tr>
+      <tr>
+        <td><code>.all(predicate)</code></td>
+        <td><code>All</code></td>
+        <td><code>true</code> if all match. Short-circuits on failure.</td>
+      </tr>
+      <tr>
+        <td><code>.contains(value)</code></td>
+        <td><code>Contains</code></td>
+        <td><code>true</code> if value is in the sequence.</td>
+      </tr>
+      <tr>
+        <td><code>.count(predicate?)</code></td>
+        <td><code>Count</code></td>
+        <td>Element count. No intermediate array.</td>
+      </tr>
+      <tr>
+        <td><code>.sum(selector?)</code></td>
+        <td><code>Sum</code></td>
+        <td>Sum of values.</td>
+      </tr>
+      <tr>
+        <td><code>.average(selector?)</code></td>
+        <td><code>Average</code></td>
+        <td>Average of values.</td>
+      </tr>
+      <tr>
+        <td><code>.min(selector?)</code></td>
+        <td><code>Min</code></td>
+        <td>Minimum. Safe for large sequences.</td>
+      </tr>
+      <tr>
+        <td><code>.max(selector?)</code></td>
+        <td><code>Max</code></td>
+        <td>Maximum. Safe for large sequences.</td>
+      </tr>
+      <tr>
+        <td><code>.aggregate(fn, seed)</code></td>
+        <td><code>Aggregate</code></td>
+        <td>Folds with accumulator.</td>
+      </tr>
+      <tr>
+        <td><code>.elementAt(index)</code></td>
+        <td><code>ElementAt</code></td>
+        <td>Element at index. Throws if out of range.</td>
+      </tr>
+      <tr>
+        <td><code>.elementAtOrDefault(index)</code></td>
+        <td><code>ElementAtOrDefault</code></td>
+        <td>Element at index or <code>null</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.sequenceEqual(other)</code></td>
+        <td><code>SequenceEqual</code></td>
+        <td>Element-by-element equality.</td>
+      </tr>
+      <tr>
+        <td><code>.orderBy(selector)</code></td>
+        <td><code>OrderBy</code></td>
+        <td>Sorts ascending. Returns Array with <code>thenBy</code>/<code>thenByDesc</code>.</td>
+      </tr>
+      <tr>
+        <td><code>.orderByDesc(selector)</code></td>
+        <td><code>OrderByDescending</code></td>
+        <td>Sorts descending.</td>
+      </tr>
+      <tr>
+        <td><code>.groupBy(keySelector)</code></td>
+        <td><code>GroupBy</code></td>
+        <td>Groups into a plain object.</td>
+      </tr>
+      <tr>
+        <td><code>.innerJoin(inner, outerKey, innerKey, result)</code></td>
+        <td><code>Join</code></td>
+        <td>Hash-based inner join.</td>
+      </tr>
+      <tr>
+        <td><code>.groupJoin(inner, outerKey, innerKey, result)</code></td>
+        <td><code>GroupJoin</code></td>
+        <td>Left outer join with grouping.</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 id="sorting-chain">Sorting chain</h3>
+  <p><code>orderBy</code> and <code>orderByDesc</code> return a plain Array extended with chaining:</p>
+  <pre class="hljs"><code><div><span class="hljs-keyword">const</span> sorted = people
+  .<span class="hljs-title function_">orderBy</span>(<span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> p.<span class="hljs-property">lastName</span>)
+  .<span class="hljs-title function_">thenBy</span>(<span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> p.<span class="hljs-property">firstName</span>)
+  .<span class="hljs-title function_">thenByDesc</span>(<span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> p.<span class="hljs-property">age</span>);
+</div></code></pre>
+  <h2 id="c-comparison">C# comparison</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>C#</th>
+        <th>@romatech/linq</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>users.Where(u =&gt; u.Active).Select(u =&gt; u.Name).Take(10).ToList()</code></td>
+        <td><code>users.where(u =&gt; u.active).select(u =&gt; u.name).take(10).toArray()</code></td>
+      </tr>
+      <tr>
+        <td><code>users.First(u =&gt; u.Age &gt; 30)</code></td>
+        <td><code>users.first(u =&gt; u.age &gt; 30)</code></td>
+      </tr>
+      <tr>
+        <td><code>users.OrderBy(u =&gt; u.Name).ThenByDescending(u =&gt; u.Age)</code></td>
+        <td><code>users.orderBy(u =&gt; u.name).thenByDesc(u =&gt; u.age)</code></td>
+      </tr>
+      <tr>
+        <td><code>users.GroupBy(u =&gt; u.Department)</code></td>
+        <td><code>users.groupBy(u =&gt; u.department)</code></td>
+      </tr>
+      <tr>
+        <td><code>users.Count(u =&gt; u.Active)</code></td>
+        <td><code>users.count(u =&gt; u.active)</code></td>
+      </tr>
+    </tbody>
+  </table>
+  <h2 id="performance-notes">Performance notes</h2>
+  <ul>
+    <li><strong>Single pass</strong>: pipelines iterate the source exactly once when consumed,
+      regardless of how many intermediate operators are chained.</li>
+    <li><strong>Short-circuit</strong>: <code>take</code>, <code>first</code>, <code>any</code>, and <code>all</code>
+      stop iteration as soon
+      as the result is determined.</li>
+    <li><strong>No spread overflow</strong>: <code>min</code> and <code>max</code> use a loop instead of
+      <code>Math.min(...array)</code>, making them safe for arrays with any number of elements.
+    </li>
+    <li><strong>Schwartzian transform</strong>: <code>orderBy</code> and <code>orderByDesc</code> call the key selector
+      once per element (O(n)) rather than once per comparison (O(n log n)).</li>
+    <li><strong>Set operations</strong>: <code>distinct</code>, <code>union</code>, <code>intersect</code>, and
+      <code>except</code> use <code>Set</code>
+      lookups. Primitives are stored directly (O(1)); objects fall back to
+      <code>JSON.stringify</code> for deep equality.
+    </li>
+  </ul>
+  <h2 id="typescript-support">TypeScript support</h2>
+  <p>Full type definitions are included. The <code>LazyQuery&lt;T&gt;</code> class and the
+    <code>OrderedArray&lt;T&gt;</code> interface are exported.
+  </p>
+  <pre class="hljs"><code><div><span class="hljs-keyword">import</span> <span class="hljs-string">&#x27;@romatech/linq&#x27;</span>;
+<span class="hljs-keyword">import</span> { <span class="hljs-title class_">LazyQuery</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@romatech/linq&#x27;</span>;
+
+<span class="hljs-keyword">interface</span> <span class="hljs-title class_">User</span> {
+  <span class="hljs-attr">name</span>: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">age</span>: <span class="hljs-built_in">number</span>;
+  <span class="hljs-attr">active</span>: <span class="hljs-built_in">boolean</span>;
+}
+
+<span class="hljs-keyword">const</span> <span class="hljs-attr">users</span>: <span class="hljs-title class_">User</span>[] = [ <span class="hljs-comment">/* ... */</span> ];
+
+<span class="hljs-keyword">const</span> <span class="hljs-attr">names</span>: <span class="hljs-built_in">string</span>[] = users
+  .<span class="hljs-title function_">where</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">active</span>)
+  .<span class="hljs-title function_">select</span>(<span class="hljs-function"><span class="hljs-params">u</span> =&gt;</span> u.<span class="hljs-property">name</span>)
+  .<span class="hljs-title function_">toArray</span>();
+</div></code></pre>
+  <h2 id="compatibility">Compatibility</h2>
+  <ul>
+    <li>Node.js &gt;= 11 (Node 18+ recommended)</li>
+    <li>Works in browsers via bundlers (Vite, Webpack, esbuild)</li>
+    <li>Compatible with CommonJS (<code>require</code>) and ES Modules (<code>import</code>)</li>
+  </ul>
+  <h2 id="running-tests">Running tests</h2>
+  <pre class="hljs"><code><div>npm install
+npm <span class="hljs-built_in">test</span>
+</div></code></pre>
+  <p>Tests are written with <a href="https://jestjs.io">Jest</a> and cover both the
+    <code>Array.prototype</code> extensions and the <code>LazyQuery</code> pipeline, including
+    short-circuit behaviour and large-array safety.
+  </p>
+  <h2 id="prototype-extension-notice">Prototype extension notice</h2>
+  <p>This package adds non-enumerable methods to <code>Array.prototype</code>. The extensions
+    are safe for application code. Avoid using this package in libraries where
+    modifying global prototypes is undesirable.</p>
+  <h2 id="license">License</h2>
+  <p>MIT (c) RomaTech / Leandro Romanelli</p>
+
 </body>
+
 </html>

@@ -1,6 +1,6 @@
 {
   "name": "@romatech/linq",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "LINQ for JavaScript with lazy evaluation. Extends arrays with a deferred LazyQuery pipeline inspired by C# IEnumerable<T>. Supports filtering, projection, joining, grouping, sorting, set operations, aggregation, and short-circuit iteration — all with a fluent syntax and zero intermediate allocations.",
   "author": "RomaTech/Leandro Romanelli",
   "repository": {
