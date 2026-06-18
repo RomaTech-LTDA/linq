@@ -26,7 +26,7 @@ if [ ! -f "package.json" ]; then
 fi
 
 # 2. Ensure npm is logged in
-echo "[1/6] Checking npm authentication..."
+echo "[1/7] Checking npm authentication..."
 if ! npm whoami &>/dev/null; then
     echo "ERROR: Not logged in to npm. Run 'npm login' first."
     exit 1
@@ -35,30 +35,36 @@ echo "       Logged in as: $(npm whoami)"
 echo ""
 
 # 3. Install dependencies
-echo "[2/6] Installing dependencies..."
+echo "[2/7] Installing dependencies..."
 npm ci --silent
 echo "       Done."
 echo ""
 
 # 4. Run tests
-echo "[3/6] Running tests..."
+echo "[3/7] Running tests..."
 npm test
 echo ""
 
 # 5. Version bump
-echo "[4/6] Bumping version ($BUMP)..."
+echo "[4/7] Bumping version ($BUMP)..."
 npm version "$BUMP" --no-git-tag-version
 NEW_VERSION=$(node -p "require('./package.json').version")
 echo "       New version: $NEW_VERSION"
 echo ""
 
-# 6. Dry run to verify package contents
-echo "[5/6] Verifying package contents (dry run)..."
-npm pack --dry-run
+# 6. Update CHANGELOG
+echo "[5/7] Updating CHANGELOG.md..."
+if [ -f "CHANGELOG.md" ]; then
+    DATE=$(date +%Y-%m-%d)
+    sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $DATE/" CHANGELOG.md
+    echo "       Done."
+else
+    echo "       (no CHANGELOG.md found, skipping)"
+fi
 echo ""
 
 # 7. Publish
-echo "[6/6] Publishing $PKG_NAME@$NEW_VERSION to npm..."
+echo "[6/7] Publishing $PKG_NAME@$NEW_VERSION to npm..."
 npm publish --access public
 echo ""
 
@@ -68,8 +74,8 @@ echo "============================================"
 
 # 8. Commit and tag
 echo ""
-echo "Committing version bump and creating git tag..."
-git add package.json package-lock.json 2>/dev/null || true
+echo "[7/7] Committing version bump and creating git tag..."
+git add package.json package-lock.json CHANGELOG.md 2>/dev/null || true
 git commit -m "chore: release v$NEW_VERSION"
 git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
 echo ""
