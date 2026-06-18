@@ -5,11 +5,11 @@
   "author": "RomaTech/Leandro Romanelli",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/romatech-ltda/linq.git"
+    "url": "git+https://github.com/RomaTech-LTDA/linq.git"
   },
-  "homepage": "https://github.com/romatech-ltda/linq#readme",
+  "homepage": "https://github.com/RomaTech-LTDA/linq#readme",
   "bugs": {
-    "url": "https://github.com/romatech-ltda/linq/issues"
+    "url": "https://github.com/RomaTech-LTDA/linq/issues"
   },
   "license": "MIT",
   "main": "./index.js",
