@@ -13,7 +13,22 @@
  * @returns {number}
  */
 function compare(a, b) {
+    // null, undefined and NaN are not ordered by < and >, which made the
+    // comparator inconsistent and left sorted output unsorted. Treat them
+    // as equal to each other and smaller than any other value (like C#,
+    // where null sorts first in OrderBy and last in OrderByDescending).
+    const aMissing = isMissingKey(a);
+    const bMissing = isMissingKey(b);
+    if (aMissing || bMissing) return aMissing === bMissing ? 0 : aMissing ? -1 : 1;
     return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * @param {*} value
+ * @returns {boolean} true for null, undefined and NaN
+ */
+function isMissingKey(value) {
+    return value === null || value === undefined || (typeof value === 'number' && Number.isNaN(value));
 }
 
 // ---------------------------------------------------------------------------
@@ -30,8 +45,11 @@ function compare(a, b) {
  * @returns {*}
  */
 function toKey(value) {
+    // Prefix strings and serialised objects so the string '{"a":1}' and the
+    // object { a: 1 } do not produce the same key.
+    if (typeof value === 'string') return 's:' + value;
     if (value === null || typeof value !== 'object') return value;
-    return JSON.stringify(value);
+    return 'o:' + JSON.stringify(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -985,6 +1003,7 @@ function _chainSort(array, selectors, directions) {
 function _attachThenBy(array, selectors, directions) {
     Object.defineProperty(array, 'thenBy', {
         enumerable: false,
+        writable: true,
         configurable: true,
         value: function (fn) {
             return _chainSort(this, [...selectors, fn], [...directions, false]);
@@ -993,6 +1012,7 @@ function _attachThenBy(array, selectors, directions) {
 
     Object.defineProperty(array, 'thenByDesc', {
         enumerable: false,
+        writable: true,
         configurable: true,
         value: function (fn) {
             return _chainSort(this, [...selectors, fn], [...directions, true]);
@@ -1020,22 +1040,30 @@ function _attachThenBy(array, selectors, directions) {
 /** @see LazyQuery#select */
 Object.defineProperty(Array.prototype, 'select', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
-        return new LazyQuery(this).select(selector);
+        const array = this;
+        return new LazyQuery(this).select((item, index) => selector(item, index, array));
     },
 });
 
 /** @see LazyQuery#selectMany */
 Object.defineProperty(Array.prototype, 'selectMany', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
-        return new LazyQuery(this).selectMany(selector);
+        const array = this;
+        return new LazyQuery(this).selectMany((item, index) => selector(item, index, array));
     },
 });
 
 /** @see LazyQuery#cast */
 Object.defineProperty(Array.prototype, 'cast', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function () {
         return new LazyQuery(this).cast();
     },
@@ -1044,6 +1072,8 @@ Object.defineProperty(Array.prototype, 'cast', {
 /** @see LazyQuery#ofType */
 Object.defineProperty(Array.prototype, 'ofType', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (type) {
         return new LazyQuery(this).ofType(type);
     },
@@ -1054,8 +1084,11 @@ Object.defineProperty(Array.prototype, 'ofType', {
 /** @see LazyQuery#where */
 Object.defineProperty(Array.prototype, 'where', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
-        return new LazyQuery(this).where(predicate);
+        const array = this;
+        return new LazyQuery(this).where((item, index) => predicate(item, index, array));
     },
 });
 
@@ -1069,13 +1102,15 @@ Object.defineProperty(Array.prototype, 'where', {
  */
 Object.defineProperty(Array.prototype, 'first', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         if (!predicate) {
             if (this.length === 0) throw new Error('Sequence contains no elements');
             return this[0];
         }
         for (let i = 0; i < this.length; i++) {
-            if (predicate(this[i])) return this[i];
+            if (predicate(this[i], i, this)) return this[i];
         }
         throw new Error('Sequence contains no matching element');
     },
@@ -1091,10 +1126,12 @@ Object.defineProperty(Array.prototype, 'first', {
  */
 Object.defineProperty(Array.prototype, 'firstOrDefault', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         if (!predicate) return this.length > 0 ? this[0] : null;
         for (let i = 0; i < this.length; i++) {
-            if (predicate(this[i])) return this[i];
+            if (predicate(this[i], i, this)) return this[i];
         }
         return null;
     },
@@ -1109,13 +1146,15 @@ Object.defineProperty(Array.prototype, 'firstOrDefault', {
  */
 Object.defineProperty(Array.prototype, 'last', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         if (!predicate) {
             if (this.length === 0) throw new Error('Sequence contains no elements');
             return this[this.length - 1];
         }
         for (let i = this.length - 1; i >= 0; i--) {
-            if (predicate(this[i])) return this[i];
+            if (predicate(this[i], i, this)) return this[i];
         }
         throw new Error('Sequence contains no matching element');
     },
@@ -1130,10 +1169,12 @@ Object.defineProperty(Array.prototype, 'last', {
  */
 Object.defineProperty(Array.prototype, 'lastOrDefault', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         if (!predicate) return this.length > 0 ? this[this.length - 1] : null;
         for (let i = this.length - 1; i >= 0; i--) {
-            if (predicate(this[i])) return this[i];
+            if (predicate(this[i], i, this)) return this[i];
         }
         return null;
     },
@@ -1149,6 +1190,8 @@ Object.defineProperty(Array.prototype, 'lastOrDefault', {
  */
 Object.defineProperty(Array.prototype, 'single', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         const source = predicate ? this.filter(predicate) : this;
         if (source.length !== 1) throw new Error('Sequence does not contain exactly one element');
@@ -1165,6 +1208,8 @@ Object.defineProperty(Array.prototype, 'single', {
  */
 Object.defineProperty(Array.prototype, 'singleOrDefault', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         const source = predicate ? this.filter(predicate) : this;
         if (source.length > 1) throw new Error('Sequence contains more than one element');
@@ -1182,10 +1227,12 @@ Object.defineProperty(Array.prototype, 'singleOrDefault', {
  */
 Object.defineProperty(Array.prototype, 'any', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         if (!predicate) return this.length > 0;
         for (let i = 0; i < this.length; i++) {
-            if (predicate(this[i])) return true;
+            if (predicate(this[i], i, this)) return true;
         }
         return false;
     },
@@ -1200,6 +1247,8 @@ Object.defineProperty(Array.prototype, 'any', {
  */
 Object.defineProperty(Array.prototype, 'all', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         return this.every(predicate);
     },
@@ -1214,6 +1263,8 @@ Object.defineProperty(Array.prototype, 'all', {
  */
 Object.defineProperty(Array.prototype, 'contains', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (value) {
         return this.includes(value);
     },
@@ -1229,6 +1280,8 @@ Object.defineProperty(Array.prototype, 'contains', {
  */
 Object.defineProperty(Array.prototype, 'elementAt', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (index) {
         if (index < 0 || index >= this.length) throw new Error('Index out of range');
         return this[index];
@@ -1244,6 +1297,8 @@ Object.defineProperty(Array.prototype, 'elementAt', {
  */
 Object.defineProperty(Array.prototype, 'elementAtOrDefault', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (index) {
         if (index < 0 || index >= this.length) return null;
         return this[index];
@@ -1262,11 +1317,13 @@ Object.defineProperty(Array.prototype, 'elementAtOrDefault', {
  */
 Object.defineProperty(Array.prototype, 'count', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         if (!predicate) return this.length;
         let n = 0;
         for (let i = 0; i < this.length; i++) {
-            if (predicate(this[i])) n++;
+            if (predicate(this[i], i, this)) n++;
         }
         return n;
     },
@@ -1282,10 +1339,12 @@ Object.defineProperty(Array.prototype, 'count', {
  */
 Object.defineProperty(Array.prototype, 'sum', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         let total = 0;
         if (selector) {
-            for (let i = 0; i < this.length; i++) total += selector(this[i]);
+            for (let i = 0; i < this.length; i++) total += selector(this[i], i, this);
         } else {
             for (let i = 0; i < this.length; i++) total += this[i];
         }
@@ -1303,11 +1362,13 @@ Object.defineProperty(Array.prototype, 'sum', {
  */
 Object.defineProperty(Array.prototype, 'average', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         if (this.length === 0) return 0;
         let total = 0;
         if (selector) {
-            for (let i = 0; i < this.length; i++) total += selector(this[i]);
+            for (let i = 0; i < this.length; i++) total += selector(this[i], i, this);
         } else {
             for (let i = 0; i < this.length; i++) total += this[i];
         }
@@ -1326,10 +1387,12 @@ Object.defineProperty(Array.prototype, 'average', {
  */
 Object.defineProperty(Array.prototype, 'min', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         let result = Infinity;
         for (let i = 0; i < this.length; i++) {
-            const v = selector ? selector(this[i]) : this[i];
+            const v = selector ? selector(this[i], i, this) : this[i];
             if (v < result) result = v;
         }
         return result;
@@ -1347,10 +1410,12 @@ Object.defineProperty(Array.prototype, 'min', {
  */
 Object.defineProperty(Array.prototype, 'max', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         let result = -Infinity;
         for (let i = 0; i < this.length; i++) {
-            const v = selector ? selector(this[i]) : this[i];
+            const v = selector ? selector(this[i], i, this) : this[i];
             if (v > result) result = v;
         }
         return result;
@@ -1367,6 +1432,8 @@ Object.defineProperty(Array.prototype, 'max', {
  */
 Object.defineProperty(Array.prototype, 'aggregate', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (accumulator, seed) {
         return this.reduce(accumulator, seed);
     },
@@ -1386,6 +1453,8 @@ Object.defineProperty(Array.prototype, 'aggregate', {
  */
 Object.defineProperty(Array.prototype, 'orderBy', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         return _chainSort(this, [selector], [false]);
     },
@@ -1400,6 +1469,8 @@ Object.defineProperty(Array.prototype, 'orderBy', {
  */
 Object.defineProperty(Array.prototype, 'orderByDesc', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         return _chainSort(this, [selector], [true]);
     },
@@ -1408,16 +1479,20 @@ Object.defineProperty(Array.prototype, 'orderByDesc', {
 /** @see LazyQuery#take */
 Object.defineProperty(Array.prototype, 'take', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (n) {
-        return this.slice(0, n);
+        return this.slice(0, n < 0 ? 0 : n);
     },
 });
 
 /** @see LazyQuery#skip */
 Object.defineProperty(Array.prototype, 'skip', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (n) {
-        return this.slice(n);
+        return this.slice(n < 0 ? 0 : n);
     },
 });
 
@@ -1430,6 +1505,8 @@ Object.defineProperty(Array.prototype, 'skip', {
  */
 Object.defineProperty(Array.prototype, 'takeWhile', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         const result = [];
         for (let i = 0; i < this.length; i++) {
@@ -1449,6 +1526,8 @@ Object.defineProperty(Array.prototype, 'takeWhile', {
  */
 Object.defineProperty(Array.prototype, 'skipWhile', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (predicate) {
         let i = 0;
         while (i < this.length && predicate(this[i])) i++;
@@ -1467,6 +1546,8 @@ Object.defineProperty(Array.prototype, 'skipWhile', {
  */
 Object.defineProperty(Array.prototype, 'distinct', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function () {
         const seen = new Set();
         const result = [];
@@ -1490,6 +1571,8 @@ Object.defineProperty(Array.prototype, 'distinct', {
  */
 Object.defineProperty(Array.prototype, 'distinctBy', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (selector) {
         const seen = new Set();
         const result = [];
@@ -1513,6 +1596,8 @@ Object.defineProperty(Array.prototype, 'distinctBy', {
  */
 Object.defineProperty(Array.prototype, 'union', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (other) {
         const seen = new Set();
         const result = [];
@@ -1537,6 +1622,8 @@ Object.defineProperty(Array.prototype, 'union', {
  */
 Object.defineProperty(Array.prototype, 'intersect', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (other) {
         const otherSet = new Set(other.map(toKey));
         const seen = new Set();
@@ -1561,6 +1648,8 @@ Object.defineProperty(Array.prototype, 'intersect', {
  */
 Object.defineProperty(Array.prototype, 'except', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (other) {
         const excluded = new Set(other.map(toKey));
         const result = [];
@@ -1585,6 +1674,8 @@ Object.defineProperty(Array.prototype, 'except', {
  */
 Object.defineProperty(Array.prototype, 'innerJoin', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (inner, outerKeySelector, innerKeySelector, resultSelector) {
         const map = new Map();
         for (let i = 0; i < inner.length; i++) {
@@ -1617,6 +1708,8 @@ Object.defineProperty(Array.prototype, 'innerJoin', {
  */
 Object.defineProperty(Array.prototype, 'groupJoin', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (inner, outerKeySelector, innerKeySelector, resultSelector) {
         const map = new Map();
         for (let i = 0; i < inner.length; i++) {
@@ -1642,6 +1735,8 @@ Object.defineProperty(Array.prototype, 'groupJoin', {
  */
 Object.defineProperty(Array.prototype, 'groupBy', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (keySelector) {
         const result = Object.create(null);
         for (let i = 0; i < this.length; i++) {
@@ -1666,6 +1761,8 @@ Object.defineProperty(Array.prototype, 'groupBy', {
  */
 Object.defineProperty(Array.prototype, 'toDictionary', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (keySelector, valueSelector) {
         const dict = Object.create(null);
         for (let i = 0; i < this.length; i++) {
@@ -1684,6 +1781,8 @@ Object.defineProperty(Array.prototype, 'toDictionary', {
  */
 Object.defineProperty(Array.prototype, 'append', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (item) {
         return [...this, item];
     },
@@ -1698,6 +1797,8 @@ Object.defineProperty(Array.prototype, 'append', {
  */
 Object.defineProperty(Array.prototype, 'prepend', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (item) {
         return [item, ...this];
     },
@@ -1713,6 +1814,8 @@ Object.defineProperty(Array.prototype, 'prepend', {
  */
 Object.defineProperty(Array.prototype, 'defaultIfEmpty', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (defaultValue) {
         return this.length > 0 ? this : [defaultValue];
     },
@@ -1728,6 +1831,8 @@ Object.defineProperty(Array.prototype, 'defaultIfEmpty', {
  */
 Object.defineProperty(Array.prototype, 'sequenceEqual', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (other) {
         if (this.length !== other.length) return false;
         for (let i = 0; i < this.length; i++) {
@@ -1748,6 +1853,8 @@ Object.defineProperty(Array.prototype, 'sequenceEqual', {
  */
 Object.defineProperty(Array.prototype, 'zip', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (other, resultSelector = (a, b) => [a, b]) {
         const len = Math.min(this.length, other.length);
         const result = new Array(len);
@@ -1769,6 +1876,8 @@ Object.defineProperty(Array.prototype, 'zip', {
  */
 Object.defineProperty(Array.prototype, 'toArray', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function () {
         return [...this];
     },
@@ -1782,6 +1891,8 @@ Object.defineProperty(Array.prototype, 'toArray', {
  */
 Object.defineProperty(Array.prototype, 'toSet', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function () {
         return new Set(this);
     },
@@ -1797,6 +1908,8 @@ Object.defineProperty(Array.prototype, 'toSet', {
  */
 Object.defineProperty(Array.prototype, 'toMap', {
     enumerable: false,
+    writable: true,
+    configurable: true,
     value: function (keySelector, valueSelector) {
         const map = new Map();
         for (let i = 0; i < this.length; i++) {

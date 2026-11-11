@@ -127,7 +127,13 @@ return a concrete value are **terminal**.
 
 ### Intermediate operators (return LazyQuery)
 
-These are available on both `Array` and `LazyQuery`:
+These are available on both `Array` and `LazyQuery`.  On a `LazyQuery` they are
+all deferred.  On a plain `Array`, only `where`, `select`, `selectMany`, `cast`
+and `ofType` return a `LazyQuery`; `take`, `skip`, `takeWhile`, `skipWhile`,
+`distinct`, `distinctBy`, `union`, `intersect`, `except`, `zip`, `append`,
+`prepend` and `defaultIfEmpty` run immediately and return an `Array`, and
+`concat` is the native `Array.prototype.concat`.  Start the chain with `where`
+or `select`, or wrap the array in `new LazyQuery(array)`, to keep it lazy.
 
 | Method | C# equivalent | Description |
 |---|---|---|
@@ -196,6 +202,11 @@ const sorted = people
   .thenByDesc(p => p.age);
 ```
 
+Keys that are `null`, `undefined` or `NaN` are treated as equal to each other
+and smaller than any other key: they come first with `orderBy`/`thenBy` and
+last with `orderByDesc`/`thenByDesc`, as `null` does in C#.  Keys of mixed
+types (for example numbers and strings) have no defined order.
+
 ## C# comparison
 
 | C# | @romatech/linq |
@@ -245,14 +256,14 @@ const names: string[] = users
 
 ## Compatibility
 
-- Node.js >= 11 (Node 18+ recommended)
+- Node.js >= 18 (`engines`); CI tests Node 22 and 24
 - Works in browsers via bundlers (Vite, Webpack, esbuild)
 - Compatible with CommonJS (`require`) and ES Modules (`import`)
 
 ## Running tests
 
 ```bash
-npm install
+npm ci
 npm test
 ```
 

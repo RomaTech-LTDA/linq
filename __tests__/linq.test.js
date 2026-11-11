@@ -486,3 +486,127 @@ describe('LazyQuery deferred execution', () => {
         expect(result).toEqual(['Dave', 'Alice', 'Carol']);
     });
 });
+
+// ---------------------------------------------------------------------------
+// Regression tests
+// ---------------------------------------------------------------------------
+
+describe('regressions', () => {
+    const path = require('path');
+    const { spawnSync } = require('child_process');
+    const root = path.join(__dirname, '..');
+
+    const runNode = (code) => spawnSync(process.execPath, ['-e', code], { cwd: root, encoding: 'utf8' });
+
+    test('Array.prototype extensions are writable and configurable', () => {
+        const names = ['select', 'where', 'first', 'count', 'orderBy', 'orderByDesc', 'take', 'toArray', 'toMap'];
+        for (const name of names) {
+            const d = Object.getOwnPropertyDescriptor(Array.prototype, name);
+            expect(d.enumerable).toBe(false);
+            expect(d.writable).toBe(true);
+            expect(d.configurable).toBe(true);
+        }
+    });
+
+    test('an own property with an extension name can be assigned in strict mode', () => {
+        'use strict';
+        const arr = [1, 2];
+        expect(() => { arr.count = 3; }).not.toThrow();
+        expect(arr.count).toBe(3);
+        expect([1, 2].count()).toBe(2);
+    });
+
+    test('loading the CommonJS and ES module builds in one process does not throw', () => {
+        const r = runNode("require('./index.js'); import('./index.mjs').then(() => console.log('ok'), e => { console.error(e.message); process.exit(1); });");
+        expect(r.stderr).toBe('');
+        expect(r.status).toBe(0);
+    });
+
+    test('a package that redefines orderBy can load after this one', () => {
+        const r = runNode("require('./index.js'); Object.defineProperty(Array.prototype, 'orderBy', { enumerable: false, configurable: true, writable: true, value: function () { return 'other'; } }); console.log([].orderBy());");
+        expect(r.stderr).toBe('');
+        expect(r.stdout.trim()).toBe('other');
+    });
+
+    test('orderBy places null, undefined and NaN keys first and sorts the rest', () => {
+        const items = [{ v: 3 }, { v: null }, { v: 1 }, { v: undefined }, { v: 2 }, { v: NaN }];
+        const asc = items.orderBy(x => x.v).map(x => x.v);
+        expect(asc.slice(3)).toEqual([1, 2, 3]);
+        expect(asc.slice(0, 3).every(v => v == null || Number.isNaN(v))).toBe(true);
+        const desc = items.orderByDesc(x => x.v).map(x => x.v);
+        expect(desc.slice(0, 3)).toEqual([3, 2, 1]);
+    });
+
+    test('orderBy with missing keys is stable and thenBy breaks ties', () => {
+        const items = [{ a: null, b: 2 }, { a: 1, b: 0 }, { a: undefined, b: 1 }];
+        const sorted = items.orderBy(x => x.a).thenBy(x => x.b);
+        expect(sorted.map(x => x.b)).toEqual([1, 2, 0]);
+    });
+
+    test('LazyQuery.orderBy handles missing keys too', () => {
+        expect(new LazyQuery([3, null, 1, undefined, 2]).orderBy(x => x)).toEqual([null, undefined, 1, 2, 3]);
+    });
+
+    test('Array take/skip with a negative count behave like LINQ and LazyQuery', () => {
+        expect([1, 2, 3, 4].take(-1)).toEqual([]);
+        expect([1, 2, 3, 4].skip(-1)).toEqual([1, 2, 3, 4]);
+        expect([1, 2, 3, 4].take(-1)).toEqual(new LazyQuery([1, 2, 3, 4]).take(-1).toArray());
+        expect([1, 2, 3, 4].skip(-1)).toEqual(new LazyQuery([1, 2, 3, 4]).skip(-1).toArray());
+    });
+
+    test('set operations do not treat a string and an object with the same JSON as equal', () => {
+        const obj = { a: 1 };
+        const str = '{"a":1}';
+        expect([str, obj].distinct()).toEqual([str, obj]);
+        expect([str].intersect([obj])).toEqual([]);
+        expect([str].except([obj])).toEqual([str]);
+        expect([str].union([obj])).toEqual([str, obj]);
+        expect(new LazyQuery([str, obj]).distinct().toArray()).toEqual([str, obj]);
+        expect([{ a: 1 }, { a: 1 }, 'x', 'x', 1, 1].distinct()).toEqual([{ a: 1 }, 'x', 1]);
+    });
+
+    test('Array callbacks receive (item, index, array) as typed in index.d.ts', () => {
+        const arr = [10, 20, 30];
+        const seen = [];
+        const spy = (item, index, array) => { seen.push([item, index, array === arr]); return false; };
+        const callbacks = {
+            where: () => arr.where(spy).toArray(),
+            select: () => arr.select(spy).toArray(),
+            selectMany: () => arr.selectMany((x, i, a) => { spy(x, i, a); return []; }).toArray(),
+            first: () => { try { arr.first(spy); } catch (e) { /* no match */ } },
+            firstOrDefault: () => arr.firstOrDefault(spy),
+            last: () => { try { arr.last(spy); } catch (e) { /* no match */ } },
+            lastOrDefault: () => arr.lastOrDefault(spy),
+            any: () => arr.any(spy),
+            count: () => arr.count(spy),
+            sum: () => arr.sum((x, i, a) => { spy(x, i, a); return 0; }),
+            average: () => arr.average((x, i, a) => { spy(x, i, a); return 0; }),
+            min: () => arr.min((x, i, a) => { spy(x, i, a); return 0; }),
+            max: () => arr.max((x, i, a) => { spy(x, i, a); return 0; }),
+        };
+        for (const [name, call] of Object.entries(callbacks)) {
+            seen.length = 0;
+            call();
+            const sorted = [...seen].sort((p, q) => p[1] - q[1]);
+            expect({ name, seen: sorted }).toEqual({
+                name,
+                seen: [[10, 0, true], [20, 1, true], [30, 2, true]],
+            });
+        }
+        expect([1, 1, 1].sum((x, i) => i)).toBe(3);
+        expect([5, 6, 7].count((x, i) => i === 2)).toBe(1);
+    });
+});
+
+describe('Array and LazyQuery callback parity', () => {
+    test('takeWhile, skipWhile and distinctBy call the callback with the item only, like LazyQuery', () => {
+        const usesSecondArg = (x, i) => i === undefined;
+        const data = [1, 2, 3];
+        expect(data.takeWhile(usesSecondArg)).toEqual(new LazyQuery(data).takeWhile(usesSecondArg).toArray());
+        expect(data.skipWhile(usesSecondArg)).toEqual(new LazyQuery(data).skipWhile(usesSecondArg).toArray());
+        const keyOf = (x, i) => (i === undefined ? x % 2 : i);
+        expect(data.distinctBy(keyOf)).toEqual(new LazyQuery(data).distinctBy(keyOf).toArray());
+        expect(data.takeWhile(usesSecondArg)).toEqual([1, 2, 3]);
+        expect(data.distinctBy(keyOf)).toEqual([1, 2]);
+    });
+});
