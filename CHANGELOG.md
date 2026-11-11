@@ -9,8 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [3.4.0] - 2026-11-11
 
 This version is higher than every version already on npm (1.0.0, 1.0.1, 2.0.0,
-3.0.0 and 3.3.0), so projects on `^3` receive it. The code published as 2.0.0
-and 3.3.0 is the same; 3.4.0 replaces both.
+3.0.0 and 3.3.0), so projects on `^3` receive it. The code published as 2.0.0,
+3.0.0 and 3.3.0 is the same (3.0.0 differs only in line endings); 3.4.0
+replaces all three. The `latest` dist-tag on npm still points to 2.0.0; a
+normal `npm publish` of 3.4.0 moves it to 3.4.0.
 
 ### Breaking
 - No change to the exported API or to `index.d.ts`. Two fixes below change the
@@ -40,26 +42,34 @@ and 3.3.0 is the same; 3.4.0 replaces both.
 - The set operations (`distinct`, `union`, `intersect`, `except`, on `Array` and
   on `LazyQuery`) treated a string and an object with the same JSON
   (`'{"a":1}'` and `{ a: 1 }`) as the same element.
-- The `Array` callbacks of `where`, `select`, `selectMany`, `first`,
-  `firstOrDefault`, `last`, `lastOrDefault`, `any`, `count`, `sum`, `average`,
-  `min` and `max` now receive `(item, index, array)`, as `index.d.ts` declares.
-  Before, `index` and `array` were `undefined` (`[1,1,1].sum((x, i) => i)` gave
-  `NaN`). `single`, `singleOrDefault` and `all` already received them.
-  `takeWhile`, `skipWhile` and `distinctBy` still receive only the item, as
-  their typings and the `LazyQuery` versions do.
+- The `Array` callbacks now receive `(item, index, array)`, as `index.d.ts`
+  declares:
+  - `first`, `firstOrDefault`, `last`, `lastOrDefault`, `any`, `count`, `sum`,
+    `average`, `min` and `max` received only the item; `index` and `array` were
+    `undefined` (`[1,1,1].sum((x, i) => i)` gave `NaN`, now `3`).
+  - `where`, `select` and `selectMany` already received `(item, index)`; they
+    now also receive `array`.
+  - `single`, `singleOrDefault` and `all` already received all three.
+  - `takeWhile`, `skipWhile`, `distinctBy`, `orderBy`/`thenBy`, `groupBy`,
+    `toDictionary`, `toMap` and the join key selectors still receive only the
+    item, as their typings and the `LazyQuery` versions do.
 
 ### Changed
 - **Behavior change:** `null`, `undefined` and `NaN` sort keys are equal to each
   other and smaller than every other key: they come first with
   `orderBy`/`thenBy` and last with `orderByDesc`/`thenByDesc`, as `null` does
-  in C#. Before, a `null` key was compared as `0`, so it now moves before
-  negative numbers: `[-1, null, 1]` used to stay in that order and now becomes
-  `[null, -1, 1]`. Keys of mixed types (numbers and strings) still have no
+  in C#. Before, among numeric keys a `null` key was compared as `0`, so it now
+  moves before negative numbers: `[-1, null, 1]` used to stay in that order and
+  now becomes `[null, -1, 1]`; `undefined` and `NaN` keys used to leave the
+  result unsorted. Keys of mixed types (numbers and strings) still have no
   defined order.
-- **Behavior change:** because the callbacks listed under Fixed now receive the
-  index, a function that uses its second parameter gets the index there. For
-  example `['10', '10'].sum(parseInt)` gave `20` and now parses with the index
-  as the radix and returns `NaN`; write `sum(x => parseInt(x, 10))`.
+- **Behavior change:** the `Array` callbacks of `first`, `firstOrDefault`,
+  `last`, `lastOrDefault`, `any`, `count`, `sum`, `average`, `min` and `max`
+  now receive the index as their second argument, and every callback listed
+  under Fixed receives the array as its third. A function passed directly that
+  uses those parameters behaves differently. For example
+  `['10', '10'].sum(parseInt)` gave `20` and now parses with the index as the
+  radix and returns `NaN`; write `sum(x => parseInt(x, 10))`.
 - README: on a plain `Array`, `take`, `skip`, `distinct` and the other set
   operators run immediately and return an `Array`; only `where`, `select`,
   `selectMany`, `cast` and `ofType` start a lazy query. The ordering of missing
